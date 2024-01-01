@@ -128,7 +128,7 @@ int main() {
     Commands commands;
     commands.toggleAlternativeScreen();
 
-    char c;
+    char c[2];
 
     while(true) {
         // Draw text lines
@@ -154,8 +154,8 @@ int main() {
         commands.moveTo(curX, curY);
 
         size_t readno = read(STDIN_FILENO, &c, sizeof(c));
-        if (iscntrl(c) && readno > 0) {
-            if (c == '\n') {
+        if (iscntrl(c[0]) && readno > 0) {
+            if (c[0] == '\n') {
                 commands.newLine();
                 text.emplace_back("");
                 curX = 1;
@@ -164,10 +164,13 @@ int main() {
                 // todo I guess
             }
         } else if(readno > 0) {
-            if (c == 'q') {
+            if (c[0] == 'q') {
                 break;
             }
-            text[curY - 1].push_back(c);
+            for (int i = 0; i < readno; ++i) {
+                text[curY - 1].push_back(c[i]);
+            }
+
             curX++;
         }
 
