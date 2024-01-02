@@ -5,6 +5,7 @@
 #include <cstdlib>
 #include <string>
 #include <vector>
+#include <iostream>
 
 static termios term{};
 
@@ -116,6 +117,23 @@ struct Commands {
     }
 };
 
+void moveCursor(char key, int& cx, int& cy) {
+    switch (key) {
+        case 'A':
+            cy--;
+            break;
+        case 'B':
+            cy++;
+            break;
+        case 'C':
+            cx++;
+            break;
+        case 'D':
+            cx--;
+            break;
+    }
+}
+
 int main() {
     enableRaw();
     requestSize(0);
@@ -128,7 +146,7 @@ int main() {
     Commands commands;
     commands.toggleAlternativeScreen();
 
-    char c[2];
+    char c[3];
 
     while(true) {
         // Draw text lines
@@ -161,12 +179,16 @@ int main() {
                 curX = 1;
                 curY++;
             } else {
-                // todo I guess
+                if (readno == 3 && c[1] == '[') {
+                    moveCursor(c[2], curX, curY);
+                }
+
             }
         } else if(readno > 0) {
             if (c[0] == 'q') {
                 break;
             }
+
             for (int i = 0; i < readno; ++i) {
                 text[curY - 1].push_back(c[i]);
             }

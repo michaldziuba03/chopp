@@ -11,9 +11,9 @@ Simple TUI text editor written in C++. Experimental project :)
 ## Rules and goals of the project
 
 - don't use TUI libraries like ncurses, curses etc. I want to learn how more complex TUI is handled by terminals. Project follows widely supported [vt100](https://www.vt100.net/) standard
-- supoort searching in text
+- support searching in text
 - support syntax highlighting
-- support polish, russian characters
+- support UTF-8
 - make it usable for daily use
 
 ## License
