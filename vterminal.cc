@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
+#include "colors.hh"
 
 inline void writeStdin(const char* buf, size_t len) {
     write(STDIN_FILENO, buf, len);
@@ -102,5 +103,17 @@ namespace terminal {
         clearLine();
         print(str);
         newLine();
+    }
+
+    void setForegroundColor(Colors color) {
+        buf.appendStr(foregroundANSI(color));
+    }
+
+    void setBackgroundColor(Colors color) {
+        buf.appendStr(backgroundANSI(color));
+    }
+
+    void resetColors() {
+        buf.appendStr(C_RESET);
     }
 }
