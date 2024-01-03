@@ -31,4 +31,7 @@
 *.out
 *.app
 
+# Bullshit directories:
+build
 .idea
+.vscode
