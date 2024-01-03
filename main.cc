@@ -1,21 +1,8 @@
+#include <vector>
+#include <iostream>
 #include "vterminal.cc"
-
-void moveCursor(char key, int& cx, int& cy) {
-    switch (key) {
-        case 'A':
-            cy--;
-            break;
-        case 'B':
-            cy++;
-            break;
-        case 'C':
-            cx++;
-            break;
-        case 'D':
-            cx--;
-            break;
-    }
-}
+#include "events.cc"
+#include "utf8.cc"
 
 int main() {
     terminal::raw();
@@ -28,8 +15,6 @@ int main() {
     std::vector<std::string> text;
     std::string curLine;
     text.emplace_back(curLine);
-
-    char c[3];
 
     while(true) {
         // Draw text lines
@@ -45,38 +30,49 @@ int main() {
         // Draw statusbar:
         terminal::setBackgroundColor(BLUE);
         terminal::setForegroundColor(WHITE);
+        terminal::setBold();
         std::string label = "Lines: " + std::to_string(text.size());
         std::string statusSpace = std::string(terminal::cols - label.length(), ' ');
 
         std::string statusBar = label + statusSpace;
         terminal::mvprint(1, terminal::rows, statusBar);
-        terminal::resetColors();
+        terminal::resetStyles();
         terminal::moveTo(curX, curY);
         terminal::flush();
         
-        size_t readno = read(STDIN_FILENO, &c, sizeof(c));
-        if (iscntrl(c[0]) && readno > 0) {
-            if (c[0] == '\n') {
+        // process input:
+        char chars[4] = {};
+        auto event = poll(chars);
+
+        switch (event.type) {
+            case ENTER:
                 terminal::newLine();
                 text.emplace_back("");
                 curX = 1;
                 curY++;
-            } else {
-                if (readno == 3 && c[1] == '[') {
-                    moveCursor(c[2], curX, curY);
-                }
-            }
-        } else if(readno > 0) {
-            if (c[0] == 'q') {
                 break;
-            }
-
-            for (int i = 0; i < readno; ++i) {
-                text[curY - 1].push_back(c[i]);
-            }
-
-            curX++;
-        }    
+            case CHAR:
+                if (chars[0] == 'q') {
+                    return 0;
+                }
+                appendChar(text[curY - 1], curX - 1, chars);
+                curX++;
+                break;
+            case ARROW_RIGHT:
+                curX++;
+                break;
+            case ARROW_LEFT:
+                curX--;
+                break;
+            case ARROW_UP:
+                curY--;
+                curX = 1;
+                break;
+            case ARROW_DOWN:
+                curY++;
+                curX = 1;
+                break;
+        }
     };
 
     return 0;

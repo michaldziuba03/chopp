@@ -54,7 +54,7 @@ void appendChar(std::string& str, int pos, const char* chars) {
     size_t i = 0; // index relative to string bytes
     size_t j = 0; // index relative to "printable" unicode length
 
-    while(i < str.length()) {
+    while(i <= str.length()) {
         size_t cSize = codepointSize(str[i]);
         if (cSize == -1) {
             throw std::runtime_error("Invalid UTF-8 character");

@@ -1,12 +1,8 @@
 #pragma once
 #include <sys/ioctl.h>
-#include <unistd.h>
 #include <termios.h>
 #include <csignal>
-#include <cstdlib>
 #include <string>
-#include <vector>
-#include <iostream>
 #include "colors.hh"
 
 inline void writeStdin(const char* buf, size_t len) {
@@ -119,7 +115,11 @@ namespace terminal {
         buf.appendStr(backgroundANSI(color));
     }
 
-    void resetColors() {
+    void setBold() {
+        buf.appendStr("\x1b[1m");
+    }
+
+    void resetStyles() {
         buf.appendStr(C_RESET);
     }
 }
