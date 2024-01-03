@@ -1,3 +1,4 @@
+#pragma once
 #include <sys/ioctl.h>
 #include <unistd.h>
 #include <termios.h>
@@ -31,8 +32,8 @@ struct RawBuffer {
 
 namespace terminal {
     termios term{};
-    size_t cols;
-    size_t rows;
+    size_t cols = 0;
+    size_t rows = 0;
     RawBuffer buf;
 
     void disableRaw() {
@@ -59,6 +60,7 @@ namespace terminal {
 
     inline void requestSize() {
         requestSize(0);
+        std::signal(SIGWINCH, requestSize);
     }
 
     inline void enterAlternateScreen() {
@@ -98,10 +100,14 @@ namespace terminal {
         buf.appendStr("\r\n");
     }
 
-    void mvprintLn(int x, int y, const std::string& str) {
+    void mvprint(int x, int y, const std::string& str) {
         moveTo(x, y);
         clearLine();
         print(str);
+    }
+
+    void mvprintLn(int x, int y, const std::string& str) {
+        mvprint(x, y, str);
         newLine();
     }
 
