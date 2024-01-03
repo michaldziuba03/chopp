@@ -7,19 +7,23 @@
 #include <vector>
 #include <iostream>
 
+inline void writeStdin(const char* buf, size_t len) {
+    write(STDIN_FILENO, buf, len);
+}
+
 struct RawBuffer {
     std::string buf;
 
-    void appendStr(const std::string& bytes) {
+    inline void appendStr(const std::string& bytes) {
         buf.append(bytes);
     }
 
-    void appendByte(char byte) {
+    inline void appendByte(char byte) {
         buf.push_back(byte);
     }
 
     void flush() {
-        write(STDIN_FILENO, buf.c_str(), buf.length());
+        writeStdin(buf.c_str(), buf.length());
         buf.erase();
     }
 };
@@ -30,8 +34,7 @@ namespace terminal {
     size_t rows;
     RawBuffer buf;
 
-    void disableRaw()
-    {
+    void disableRaw() {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
     }
 
@@ -53,28 +56,51 @@ namespace terminal {
         rows = windowSize.ws_row;
     }
 
-    void enterAlternateScreen() {
-        buf.appendStr("\x1b[?1049h");
+    inline void requestSize() {
+        requestSize(0);
     }
 
-    void leaveAlternateScreen() {
-        buf.appendStr("\x1b[?1049l");
+    inline void enterAlternateScreen() {
+        writeStdin("\x1b[?1049h", 9);
+    }
+
+    inline void leaveAlternateScreen() {
+        writeStdin("\x1b[?1049l", 9);
+    }
+
+    inline void flush() {
+        buf.flush();
+    }
+
+    inline void sleep(unsigned seconds) {
+        usleep(seconds * 1000 * 1000); // takes microseconds
     }
 
     // methods to opearate in TUI:
-    void moveTo(int x, int y) {
-        buf.appendStr(std::to_string(y) + ";" + std::to_string(x) + "H");
+    inline void moveTo(int x, int y) {
+        buf.appendStr("\x1b[" + std::to_string(y) + ";" + std::to_string(x) + "H");
     }
 
-    void print(const std::string& str) {
+    inline void print(const std::string& str) {
         buf.appendStr(str);
     }
 
-    void printCh(const char byte) {
+    inline void printCh(const char byte) {
         buf.appendByte(byte);
     }
 
-    void clearLine() {
+    inline void clearLine() {
         buf.appendStr("\x1b[K");
+    }
+
+    inline void newLine() {
+        buf.appendStr("\r\n");
+    }
+
+    void mvprintLn(int x, int y, const std::string& str) {
+        moveTo(x, y);
+        clearLine();
+        print(str);
+        newLine();
     }
 }
