@@ -45,6 +45,14 @@ int main() {
         auto event = poll(chars);
 
         switch (event.type) {
+            case DELETE:
+                removeChar(text[curY - 1], curX - 2);
+                curX--;
+                break;
+            case BACKSPACE:
+                removeChar(text[curY - 1], curX - 2);
+                curX--;
+                break;
             case ENTER:
                 terminal::newLine();
                 text.emplace_back("");

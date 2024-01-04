@@ -3,9 +3,10 @@
 #include <unistd.h>
 
 enum Keys {
-    SPACE,
     ENTER,
     ESCAPE,
+    DELETE,
+    BACKSPACE,
     ARROW_UP,
     ARROW_DOWN,
     ARROW_LEFT,
@@ -51,8 +52,16 @@ Event poll(char buf[]) {
             return Event(ENTER, readno); 
         }
 
-        if (readno == 3 && buf[1] == '[') {
+        if (readno == 3 && buf[1] == '[' && buf[2] >= 'A' && buf[2] <= 'D' ) {
             return Event(detectArrows(buf[2]), readno);
+        }
+
+        if (readno == 4 && buf[1] == '[' && buf[2] == '3' && buf[3] == '~') {
+            return Event(DELETE, readno);
+        }
+
+        if(buf[0] == 127) {
+            return Event(BACKSPACE, readno);
         }
     } else if (readno > 0) {
         return Event(CHAR, readno);
