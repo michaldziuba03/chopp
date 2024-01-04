@@ -21,7 +21,9 @@ int main() {
         for (int i = 1; i < terminal::rows; ++i)
         {
             if (text.size() < i) {
+                terminal::setForegroundColor(BLUE);
                 terminal::mvprintLn(1, i, "~");
+                terminal::resetStyles();
             } else {
                 terminal::mvprintLn(1, i, text[i - 1]);
             }
@@ -45,16 +47,18 @@ int main() {
         auto event = poll(chars);
 
         switch (event.type) {
-            case DELETE:
-                removeChar(text[curY - 1], curX - 2);
-                curX--;
-                break;
             case BACKSPACE:
-                removeChar(text[curY - 1], curX - 2);
-                curX--;
+                if (curX == 1 && curY > 1) {
+                    curX = columnLen(text[curY - 2]) + 1;
+                    text[curY - 2] += text[curY - 1];
+                    text.erase(text.begin() + curY - 1);
+                    curY--;
+                } else if (curX > 0) {
+                    removeChar(text[curY - 1], curX - 2);
+                    curX--;
+                }
                 break;
             case ENTER:
-                terminal::newLine();
                 text.emplace_back("");
                 curX = 1;
                 curY++;
@@ -67,18 +71,26 @@ int main() {
                 curX++;
                 break;
             case ARROW_RIGHT:
-                curX++;
+                if (curX < columnLen(text[curY - 1]) + 1) {
+                    curX++;
+                }
                 break;
             case ARROW_LEFT:
-                curX--;
+                if (curX > 1) {
+                    curX--;
+                }
                 break;
             case ARROW_UP:
-                curY--;
-                curX = 1;
+                if (curY > 1) {
+                    curY--;
+                    curX = 1;
+                }
                 break;
             case ARROW_DOWN:
-                curY++;
-                curX = 1;
+                if (curY < text.size()) {
+                    curY++;
+                    curX = 1;
+                }
                 break;
         }
     };

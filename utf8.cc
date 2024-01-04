@@ -21,7 +21,8 @@ size_t columnLen(const std::string& str) {
     size_t i = 0;
 
     while(i < str.length()) {
-        i += codepointSize(str[i]);
+        char c = str[i];
+        i += codepointSize(c);
         len++;
     }
 
