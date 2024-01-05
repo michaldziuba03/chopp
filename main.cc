@@ -59,7 +59,10 @@ int main() {
                 }
                 break;
             case ENTER:
-                text.emplace_back("");
+                if (curX < columnLen(text[curY - 1])) {
+                } else {
+                    text.insert(text.begin() + curY, "");
+                }
                 curX = 1;
                 curY++;
                 break;
@@ -71,7 +74,7 @@ int main() {
                 curX++;
                 break;
             case ARROW_RIGHT:
-                if (curX < columnLen(text[curY - 1]) + 1) {
+                if (curX <= columnLen(text[curY - 1])) {
                     curX++;
                 }
                 break;
@@ -83,13 +86,19 @@ int main() {
             case ARROW_UP:
                 if (curY > 1) {
                     curY--;
-                    curX = 1;
+                }
+
+                if (curX >= columnLen(text[curY - 1])) {
+                    curX = columnLen(text[curY - 1]) + 1;
                 }
                 break;
             case ARROW_DOWN:
                 if (curY < text.size()) {
                     curY++;
-                    curX = 1;
+                }
+
+                if (curX >= columnLen(text[curY - 1])) {
+                    curX = columnLen(text[curY - 1]) + 1;
                 }
                 break;
         }
