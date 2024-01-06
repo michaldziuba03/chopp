@@ -3,6 +3,7 @@
 #include "vterminal.cc"
 #include "events.cc"
 #include "utf8.cc"
+#include "lexer.cc"
 #define TAB_SIZE 4
 
 void cleanup() {
@@ -32,15 +33,45 @@ int main() {
                 terminal::resetStyles();
             } else {
                 if (i == curY) {
-                    //terminal::setForegroundColor(RGB(255, 0, 0));
-                    //terminal::setBackgroundColor(WHITE);
                     terminal::setBackgroundColor(RGB(42, 43, 60));
-                    terminal::mvprintLn(1, i, text[i - 1]);
-                    terminal::resetStyles();
-                } else {
-                    terminal::mvprintLn(1, i, text[i - 1]);
                 }
 
+                std::vector<Token> tokens = {};
+                std::string& line = text[i - 1];
+
+                tokenize(tokens, line);
+                if (!tokens.size()) {
+                    terminal::mvprintLn(1, i, text[i - 1]);
+                } else {
+                    terminal::moveTo(1, i);
+                    terminal::clearLine();
+                    auto it = tokens.begin();
+                    for (int i = 0; i < line.length(); ++i) {
+                        if (it->pos + it->len == i && it != tokens.end()) {
+                            terminal::setForegroundColor(DEFAULT);
+                            it++;
+                        }
+
+                        if (it->type == DIGIT && it->pos == i) {
+                            terminal::setForegroundColor(hex("fab387"));
+                        } else  if (it->type == KEYWORD && it->pos == i) {
+                            terminal::setForegroundColor(hex("cba6f7"));
+                        } else if (it->type == STRING && it->pos == i ) {
+                            terminal::setForegroundColor(hex("a6e3a1"));
+                        } else if (it->type == OPERATOR && it->pos == i) {
+                            terminal::setForegroundColor(hex("63d6d5"));
+                        } else if (it->type == MACRO && it->pos == i) {
+                            terminal::setForegroundColor(hex("f9e2af"));
+                        }
+
+                        terminal::printCh(line[i]);
+                    }
+                }
+                terminal::setForegroundColor(DEFAULT);
+                terminal::newLine();
+                if (i == curY) {
+                    terminal::resetStyles();
+                }
             }
         }
 

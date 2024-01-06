@@ -1,3 +1,4 @@
+#pragma once
 #include "utf8.hh"
 #include <iostream>
 #include <exception>
