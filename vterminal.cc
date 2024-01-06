@@ -36,8 +36,7 @@ namespace terminal {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
     }
 
-    void raw() {
-        atexit(disableRaw);
+    void enableRaw() {
         tcgetattr(STDIN_FILENO, &term);
         termios temp_term = term;
         temp_term.c_oflag &= ~(OPOST);
@@ -111,8 +110,16 @@ namespace terminal {
         buf.appendStr(foregroundANSI(color));
     }
 
+    void setForegroundColor(RGB rgb) {
+        buf.appendStr(foregroundRGB(rgb));
+    }
+
     void setBackgroundColor(Colors color) {
         buf.appendStr(backgroundANSI(color));
+    }
+
+    void setBackgroundColor(RGB rgb) {
+        buf.appendStr(backgroundRGB(rgb));
     }
 
     void setBold() {

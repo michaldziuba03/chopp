@@ -4,11 +4,16 @@
 #include "events.cc"
 #include "utf8.cc"
 
+void cleanup() {
+    terminal::disableRaw();
+    terminal::leaveAlternateScreen();
+}
+
 int main() {
-    terminal::raw();
+    terminal::enableRaw();
     terminal::requestSize();
     terminal::enterAlternateScreen();
-    atexit(terminal::leaveAlternateScreen);
+    atexit(cleanup);
 
     int curX = 1, curY = 1;
     terminal::moveTo(curX, curY);
@@ -25,7 +30,16 @@ int main() {
                 terminal::mvprintLn(1, i, "~");
                 terminal::resetStyles();
             } else {
-                terminal::mvprintLn(1, i, text[i - 1]);
+                if (i == curY) {
+                    //terminal::setForegroundColor(RGB(255, 0, 0));
+                    //terminal::setBackgroundColor(WHITE);
+                    terminal::setBackgroundColor(RGB(42, 43, 60));
+                    terminal::mvprintLn(1, i, text[i - 1]);
+                    terminal::resetStyles();
+                } else {
+                    terminal::mvprintLn(1, i, text[i - 1]);
+                }
+
             }
         }
 
@@ -53,7 +67,7 @@ int main() {
                     text[curY - 2] += text[curY - 1];
                     text.erase(text.begin() + curY - 1);
                     curY--;
-                } else if (curX > 0) {
+                } else if (curX > 1) {
                     removeChar(text[curY - 1], curX - 2);
                     curX--;
                 }
