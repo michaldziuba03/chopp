@@ -83,9 +83,8 @@ int main() {
                 break;
             case ENTER:
                 if (curX <= columnLen(text[curY - 1])) {
-                    // breaks on non utf-8 characters!
-                    text.insert(text.begin() + curY, text[curY - 1].substr(curX - 1, columnLen(text[curY - 1]) - curX + 1));
-                    text[curY - 1].erase(curX - 1, columnLen(text[curY - 1]) - curX + 1);
+                    text.insert(text.begin() + curY, substr(text[curY - 1], curX - 1, columnLen(text[curY - 1]) - curX + 1));
+                    erase(text[curY - 1], curX - 1, columnLen(text[curY - 1]) - curX + 1);
                 } else {
                     text.insert(text.begin() + curY, "");
                 }

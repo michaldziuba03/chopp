@@ -50,6 +50,72 @@ void removeChar(std::string& str, int pos)
     }
 }
 
+std::string substr(const std::string& str, int pos, int n) {
+    size_t i = 0; // index relative to string bytes
+    size_t j = 0; // index relative to "printable" unicode length
+
+    bool isSet = false;
+    int start = 0;
+    int end = 0;
+
+    while(i <= str.length()) {
+        size_t cSize = codepointSize(str[i]);
+        if (cSize == -1) {
+            throw std::runtime_error("Invalid UTF-8 character");
+        }
+
+        if (j == pos) {
+            isSet = true;
+            start = i;
+        }
+
+        if (j == start + n && isSet) {
+            end = i;
+            break;
+        }
+
+
+        i += cSize;
+        j++;
+    }
+
+    size_t amount = end - start;
+    return str.substr(start, amount);
+}
+
+void erase(std::string& str, int pos, int n) {
+    size_t i = 0; // index relative to string bytes
+    size_t j = 0; // index relative to "printable" unicode length
+
+    bool isSet = false;
+    int start = 0;
+    int end = 0;
+
+    while(i <= str.length()) {
+        size_t cSize = codepointSize(str[i]);
+        if (cSize == -1) {
+            throw std::runtime_error("Invalid UTF-8 character");
+        }
+
+        if (j == pos) {
+            isSet = true;
+            start = i;
+        }
+
+        if (j == start + n && isSet) {
+            end = i;
+            break;
+        }
+
+
+        i += cSize;
+        j++;
+    }
+
+    size_t amount = end - start;
+    str.erase(start, amount);
+}
+
 // temporary shitty implementation
 void appendChar(std::string& str, int pos, const char* chars) {
     size_t i = 0; // index relative to string bytes
