@@ -4,7 +4,7 @@
 
 Simple TUI text editor written in C++. Experimental project :)
 
-![image](https://github.com/michaldziuba03/chopp/assets/43048524/904bd967-30dc-42d9-a1bc-07eedc357b39)
+![image](https://github.com/michaldziuba03/chopp/assets/43048524/150d891f-67d0-4970-b55a-27d508c38876)
 
 > Current state of the project
 
