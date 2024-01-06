@@ -6,6 +6,7 @@ enum Keys {
     ENTER,
     ESCAPE,
     DELETE,
+    TAB,
     BACKSPACE,
     ARROW_UP,
     ARROW_DOWN,
@@ -50,6 +51,10 @@ Event poll(char buf[]) {
     if (iscntrl(buf[0]) && readno > 0) {
         if (buf[0] == '\n') {
             return Event(ENTER, readno); 
+        }
+
+        if (buf[0] == '\t') {
+            return Event(TAB, readno);
         }
 
         if (readno == 3 && buf[1] == '[' && buf[2] >= 'A' && buf[2] <= 'D' ) {

@@ -3,6 +3,7 @@
 #include "vterminal.cc"
 #include "events.cc"
 #include "utf8.cc"
+#define TAB_SIZE 4
 
 void cleanup() {
     terminal::disableRaw();
@@ -62,6 +63,13 @@ int main() {
         auto event = poll(chars);
 
         switch (event.type) {
+            case TAB:
+                // temporary solution for tabs:
+                for (int i = 0; i < TAB_SIZE; ++i) {
+                    appendChar(text[curY - 1], curX - 1, " ");
+                    ++curX;
+                }
+                break;
             case BACKSPACE:
                 if (curX == 1 && curY > 1) {
                     curX = columnLen(text[curY - 2]) + 1;
@@ -74,7 +82,10 @@ int main() {
                 }
                 break;
             case ENTER:
-                if (curX < columnLen(text[curY - 1])) {
+                if (curX <= columnLen(text[curY - 1])) {
+                    // breaks on non utf-8 characters!
+                    text.insert(text.begin() + curY, text[curY - 1].substr(curX - 1, columnLen(text[curY - 1]) - curX + 1));
+                    text[curY - 1].erase(curX - 1, columnLen(text[curY - 1]) - curX + 1);
                 } else {
                     text.insert(text.begin() + curY, "");
                 }
