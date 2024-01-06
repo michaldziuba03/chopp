@@ -45,6 +45,7 @@ int main() {
 
         // Draw statusbar:
         terminal::setBackgroundColor(BLUE);
+        //terminal::setBackgroundColor(hex("#E58C8A"));
         terminal::setForegroundColor(WHITE);
         terminal::setBold();
         std::string label = "Lines: " + std::to_string(text.size());

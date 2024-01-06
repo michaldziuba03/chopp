@@ -126,6 +126,14 @@ namespace terminal {
         buf.appendStr("\x1b[1m");
     }
 
+    void setUnderline() {
+        buf.appendStr("\x1b[4m");
+    }
+
+    void reverseColors() {
+        buf.appendStr("\x1b[7m");
+    }
+
     void resetStyles() {
         buf.appendStr(C_RESET);
     }
