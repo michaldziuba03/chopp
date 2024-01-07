@@ -1,6 +1,7 @@
 #pragma once
 #include <cstddef>
 #include <unistd.h>
+#include "vterminal.cc"
 
 enum Keys {
     ENTER,
@@ -45,6 +46,10 @@ struct Event {
     }
 };
 
+bool hasCTRL(char c, char expectedKey) {
+    return ((expectedKey & 0x1f) == c);
+}
+
 Event poll(char buf[]) { 
     size_t readno = read(STDIN_FILENO, buf, 4);
 
@@ -72,5 +77,5 @@ Event poll(char buf[]) {
         return Event(CHAR, readno);
     }
 
-    return Event(UNKNOWN, 0);
+    return Event(UNKNOWN, readno);
 }

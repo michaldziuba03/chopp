@@ -40,7 +40,8 @@ namespace terminal {
         tcgetattr(STDIN_FILENO, &term);
         termios temp_term = term;
         temp_term.c_oflag &= ~(OPOST);
-        temp_term.c_lflag &= ~(ECHO | ICANON);
+        temp_term.c_lflag &= ~(ECHO | ICANON | ISIG);
+        temp_term.c_iflag &= ~(IXON);
         temp_term.c_cc[VMIN] = 0;
         temp_term.c_cc[VTIME] = 1;
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &temp_term);

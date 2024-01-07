@@ -92,6 +92,10 @@ int main() {
         // process input:
         char chars[4] = {};
         auto event = poll(chars);
+        
+        if (hasCTRL(chars[0], 'x') && event.len == 1) {
+            exit(0);
+        }
 
         switch (event.type) {
             case TAB:
@@ -123,9 +127,6 @@ int main() {
                 curY++;
                 break;
             case CHAR:
-                if (chars[0] == 'q') {
-                    return 0;
-                }
                 appendChar(text[curY - 1], curX - 1, chars);
                 curX++;
                 break;
