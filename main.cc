@@ -4,6 +4,7 @@
 #include "events.cc"
 #include "utf8.cc"
 #include "lexer.cc"
+#include "fs.cc"
 #define TAB_SIZE 4
 
 void cleanup() {
@@ -11,7 +12,17 @@ void cleanup() {
     terminal::leaveAlternateScreen();
 }
 
-int main() {
+int main(int argc, char *argv[]) {
+    if (argc < 2) {
+        std::cerr << "Please, enter file name to open." << std::endl;
+        return 1;
+    }
+
+    std::string filename = argv[1];
+    std::vector<std::string> text;
+
+    fs::open(filename, text);
+
     terminal::enableRaw();
     terminal::requestSize();
     terminal::enterAlternateScreen();
@@ -19,9 +30,7 @@ int main() {
 
     int curX = 1, curY = 1;
     terminal::moveTo(curX, curY);
-    std::vector<std::string> text;
-    std::string curLine;
-    text.emplace_back(curLine);
+    text.emplace_back("");
 
     while(true) {
         // Draw text lines
@@ -95,6 +104,10 @@ int main() {
         
         if (hasCTRL(chars[0], 'x') && event.len == 1) {
             exit(0);
+        }
+
+        if (hasCTRL(chars[0], 's') && event.len == 1) {
+            fs::save(filename, text);
         }
 
         switch (event.type) {

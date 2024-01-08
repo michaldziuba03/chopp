@@ -35,6 +35,6 @@
 build
 .idea
 .vscode
-
+data
 # Bullshit files
 test.cc

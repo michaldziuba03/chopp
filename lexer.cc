@@ -25,6 +25,8 @@ struct Token {
 
 // for now just take c++ keywords here
 const std::set<std::string> keywords = {
+    "using",
+    "namespace",
     "if",
     "else",
     "return",
