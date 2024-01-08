@@ -14,9 +14,8 @@ namespace fs {
             throw std::runtime_error("No permissions to open the file");
         }
 
-        while(!file.eof()) {
-            std::string line;
-            std::getline(file, line);
+        std::string line;
+        while(std::getline(file, line)) {
             lines.push_back(line);
         }
 
