@@ -28,6 +28,7 @@ int main(int argc, char *argv[]) {
     terminal::enterAlternateScreen();
     atexit(cleanup);
 
+    int scrollPos = 0;
     int curX = 1, curY = 1;
     terminal::moveTo(curX, curY);
     text.emplace_back("");
@@ -36,7 +37,7 @@ int main(int argc, char *argv[]) {
         // Draw text lines
         for (int i = 1; i < terminal::rows; ++i)
         {
-            if (text.size() < i) {
+            if (text.size() < i + scrollPos) {
                 terminal::setForegroundColor(BLUE);
                 terminal::mvprintLn(1, i, "~");
                 terminal::resetStyles();
@@ -46,11 +47,11 @@ int main(int argc, char *argv[]) {
                 }
 
                 std::vector<Token> tokens = {};
-                std::string& line = text[i - 1];
+                std::string& line = text[i - 1 + scrollPos];
 
                 tokenize(tokens, line);
                 if (!tokens.size()) {
-                    terminal::mvprintLn(1, i, text[i - 1]);
+                    terminal::mvprintLn(1, i, text[i - 1 + scrollPos]);
                 } else {
                     terminal::moveTo(1, i);
                     terminal::clearLine();
@@ -77,7 +78,7 @@ int main(int argc, char *argv[]) {
                     }
                 }
                 terminal::setForegroundColor(DEFAULT);
-                terminal::newLine();
+                if (i < terminal::rows - 1) terminal::newLine();
                 if (i == curY) {
                     terminal::resetStyles();
                 }
@@ -114,37 +115,43 @@ int main(int argc, char *argv[]) {
             case TAB:
                 // temporary solution for tabs:
                 for (int i = 0; i < TAB_SIZE; ++i) {
-                    appendChar(text[curY - 1], curX - 1, " ");
+                    appendChar(text[curY - 1 + scrollPos], curX - 1, " ");
                     ++curX;
                 }
                 break;
             case BACKSPACE:
                 if (curX == 1 && curY > 1) {
-                    curX = columnLen(text[curY - 2]) + 1;
-                    text[curY - 2] += text[curY - 1];
-                    text.erase(text.begin() + curY - 1);
+                    curX = columnLen(text[curY - 2 + scrollPos]) + 1;
+                    text[curY - 2 + scrollPos] += text[curY - 1 + scrollPos];
+                    text.erase(text.begin() + curY - 1 + scrollPos);
                     curY--;
                 } else if (curX > 1) {
-                    removeChar(text[curY - 1], curX - 2);
+                    removeChar(text[curY - 1 + scrollPos], curX - 2);
                     curX--;
                 }
                 break;
             case ENTER:
-                if (curX <= columnLen(text[curY - 1])) {
-                    text.insert(text.begin() + curY, substr(text[curY - 1], curX - 1, columnLen(text[curY - 1]) - curX + 1));
-                    erase(text[curY - 1], curX - 1, columnLen(text[curY - 1]) - curX + 1);
+                if (curX <= columnLen(text[curY - 1 + scrollPos])) {
+                    text.insert(text.begin() + curY + scrollPos, substr(text[curY - 1 + scrollPos], curX - 1, columnLen(text[curY - 1 + scrollPos]) - curX + 1));
+                    erase(text[curY - 1 + scrollPos], curX - 1, columnLen(text[curY - 1 + scrollPos]) - curX + 1);
                 } else {
-                    text.insert(text.begin() + curY, "");
+                    text.insert(text.begin() + curY + scrollPos, "");
                 }
+
+                if (curY == terminal::rows - 1) {
+                    scrollPos++;
+                } else {
+                    curY++;
+                }
+
                 curX = 1;
-                curY++;
                 break;
             case CHAR:
-                appendChar(text[curY - 1], curX - 1, chars);
+                appendChar(text[curY - 1 + scrollPos], curX - 1, chars);
                 curX++;
                 break;
             case ARROW_RIGHT:
-                if (curX <= columnLen(text[curY - 1])) {
+                if (curX <= columnLen(text[curY - 1 + scrollPos])) {
                     curX++;
                 }
                 break;
@@ -157,18 +164,25 @@ int main(int argc, char *argv[]) {
                 if (curY > 1) {
                     curY--;
                 }
+                if (curY == 1 && scrollPos) {
+                    scrollPos--;
+                }
 
-                if (curX >= columnLen(text[curY - 1])) {
-                    curX = columnLen(text[curY - 1]) + 1;
+                if (curX >= columnLen(text[curY - 1 + scrollPos])) {
+                    curX = columnLen(text[curY - 1 + scrollPos]) + 1;
                 }
                 break;
             case ARROW_DOWN:
-                if (curY < text.size()) {
-                    curY++;
+                if (curY + scrollPos < text.size()) {
+                    if (curY == terminal::rows - 1) {
+                        scrollPos++;
+                    } else {
+                        curY++;
+                    }
                 }
 
-                if (curX >= columnLen(text[curY - 1])) {
-                    curX = columnLen(text[curY - 1]) + 1;
+                if (curX >= columnLen(text[curY - 1 + scrollPos])) {
+                    curX = columnLen(text[curY - 1 + scrollPos]) + 1;
                 }
                 break;
         }
