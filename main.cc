@@ -8,6 +8,7 @@
 #define TAB_SIZE 4
 
 void cleanup() {
+    terminal::disableMouseTracking();
     terminal::disableRaw();
     terminal::leaveAlternateScreen();
 }
@@ -24,6 +25,7 @@ int main(int argc, char *argv[]) {
     fs::open(filename, text);
 
     terminal::enableRaw();
+    terminal::enableMouseTracking();
     terminal::requestSize();
     terminal::enterAlternateScreen();
     atexit(cleanup);
@@ -111,6 +113,17 @@ int main(int argc, char *argv[]) {
         }
 
         switch (event.type) {
+            case MOUSE_LEFT:
+                if (event.mouseEvent.row <= text.size()) {
+                    curY = event.mouseEvent.row;
+
+                    if (event.mouseEvent.col <= columnLen(text[curY - 1 + scrollPos])) {
+                        curX = event.mouseEvent.col;
+                    } else {
+                        curX = columnLen(text[curY - 1 + scrollPos]) + 1;
+                    }
+                }
+                break;
             case TAB:
                 // temporary solution for tabs:
                 for (int i = 0; i < TAB_SIZE; ++i) {

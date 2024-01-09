@@ -138,4 +138,12 @@ namespace terminal {
     void resetStyles() {
         buf.appendStr(C_RESET);
     }
+
+    void enableMouseTracking() {
+        writeStdin("\x1b[?1000;1006;1015h", 19);
+    }
+
+    void disableMouseTracking() {
+        writeStdin("\x1b[?1000;1006;1015l", 19);
+    }
 }
