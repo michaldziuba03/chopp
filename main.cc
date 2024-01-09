@@ -31,7 +31,6 @@ int main(int argc, char *argv[]) {
     int scrollPos = 0;
     int curX = 1, curY = 1;
     terminal::moveTo(curX, curY);
-    text.emplace_back("");
 
     while(true) {
         // Draw text lines

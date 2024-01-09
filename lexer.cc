@@ -106,7 +106,7 @@ void tokenize(std::vector<Token>& tokens, const std::string& code) {
             continue;
         }
 
-        if(isdigit(c)) {;
+        if(isdigit(c)) {
             std::string val = std::string(1, c);
             tokens.push_back(Token { DIGIT, val, offset });
             offset++;
@@ -165,12 +165,12 @@ void tokenize(std::vector<Token>& tokens, const std::string& code) {
 
         if (isStringQuote(c)) {
             size_t pos = offset;
-            std::string val = "\"";
+            std::string val = std::string(1, c);
             offset++;
             while(offset < code.length()) {
                 c = code[offset];
                 if (isStringQuote(c)) {
-                    val.push_back('"');
+                    val.push_back(c);
                     offset++;
                     break;
                 }
@@ -182,6 +182,27 @@ void tokenize(std::vector<Token>& tokens, const std::string& code) {
             tokens.push_back(Token { STRING, val, pos, strLen });
             continue;
         }
+
+        if (c == '\'') {
+            size_t pos = offset;
+            std::string val = std::string(1, c);
+            offset++;
+            while(offset < code.length()) {
+                c = code[offset];
+                if (c == '\'') {
+                    val.push_back(c);
+                    offset++;
+                    break;
+                }
+                offset++;
+                val.push_back(c);
+            }
+
+            size_t strLen = val.length();
+            tokens.push_back(Token { STRING, val, pos, strLen });
+            continue;
+        }
+
         offset++;
     }
 }
