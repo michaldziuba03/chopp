@@ -129,7 +129,7 @@ Event poll(char buf[]) {
             return mouseLeftEv;
         }
 
-        if(buf[0] == 127) {
+        if(buf[0] == 127 || buf[0] == 8) {
             return Event(BACKSPACE, readno);
         }
     } else if (readno > 0) {

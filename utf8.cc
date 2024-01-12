@@ -23,6 +23,11 @@ size_t columnLen(const std::string& str) {
 
     while(i < str.length()) {
         char c = str[i];
+        if (c == '\r') {
+            i++;
+            continue;
+        }
+
         i += codepointSize(c);
         len++;
     }

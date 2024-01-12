@@ -78,6 +78,7 @@ int main(int argc, char *argv[]) {
                         terminal::printCh(line[i]);
                     }
                 }
+
                 terminal::setForegroundColor(DEFAULT);
                 if (i < terminal::rows - 1) terminal::newLine();
                 if (i == curY) {
