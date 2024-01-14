@@ -2,9 +2,7 @@
 
 # Chopp
 
-Simple TUI text editor written in C++. Experimental project with messy code - I plan to rewrite this project very soon and implement concepts:
-- parse syntax tree for highlighting
-- use rope data structure or gap buffer for text
+Simple TUI text editor written in C++. Experimental project with messy code - I'm working on improved "final" version.
 
 ![image](https://github.com/michaldziuba03/chopp/assets/43048524/150d891f-67d0-4970-b55a-27d508c38876)
 
