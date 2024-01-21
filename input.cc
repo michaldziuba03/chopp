@@ -1,10 +1,8 @@
 #pragma once
 #include <string>
-#include <iostream>
 #include <queue>
 #include <unistd.h>
 #include "events.hh"
-#include "vterminal.cc"
 #include "keys.cc"
 
 #define READ_CHUNK_SIZE 32
@@ -21,7 +19,7 @@ public:
     }
 
     Event next() {
-        Event event(event_list.front());
+        Event event = event_list.front();
         event_list.pop(); 
 
         return event;
@@ -52,21 +50,3 @@ public:
         }
     }
 };
-
-int main() {
-    terminal::enableRaw();
-    Input input;
-
-    while (true) {
-        input.poll();
-        while(!input.empty()) {
-            Event ev = input.next();
-            if (ev.type == CHAR) {
-                std::cout << ev.type << ": " << ev.chars << " len: " << ev.chars.length() << '\r' << std::endl;
-            } else {
-                std::cout << ev.type << '\r' << std::endl;
-            }
-        }
-    }
-    return 0;
-}

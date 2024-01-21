@@ -1,7 +1,5 @@
 #include <string>
 
-#define C_RESET "\x1b[0m"
-
 enum Colors {
     BLACK = 0,
     RED = 1,
