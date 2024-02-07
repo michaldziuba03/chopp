@@ -1,10 +1,6 @@
-#include <vector>
-#include <iostream>
 #include "terminal.cc"
-#include "events.hh"
-#include "utf8.cc"
 #include "input.cc"
-#include "fs.cc"
+#include <iostream>
 
 void cleanup() {
     terminal::disable_raw();
@@ -15,24 +11,23 @@ int main() {
     terminal::enable_raw();
     terminal::enter_alternate_screen();
     atexit(cleanup);
+
     Input input;
-    terminal::move_to(1, 1);
     while (true) {
-        terminal::foreground(RED);
-        terminal::flush();
-        input.poll();
-        while(!input.empty()) {
-            Event ev = input.next();
-            if (ev.type == CHAR) {
-                std::cout << ev.type << ": " << ev.chars << " len: " << ev.chars.length() << '\r' << std::endl;
-                if (ev.chars == "q" || ev.chars == "Q") {
+        auto event = input.get_next_key();
+        if (event.has_value()) {
+            auto key = event.value();
+            std::cout << key.type << "\r" << std::endl;
+            if (key == Key::Char) {
+                if (key == "q" || key == "Q") {
                     exit(0);
                 }
-            } else {
-                std::cout << ev.type << '\r' << std::endl;
+
+                std::cout << key.bytes << "\r" << std::endl;
             }
         }
+        
     }
-
+    
     return 0;
 }

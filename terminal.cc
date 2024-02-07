@@ -51,6 +51,14 @@ namespace terminal {
         write_stdin("\x1b[?1049l");
     }
 
+    void enable_mouse_tracking() {
+        write_stdin("\x1b[?1000;1006;1015h");
+    }
+
+    void disable_mouse_tracking() {
+        write_stdin("\x1b[?1000;1006;1015l");
+    }
+
     // drawing
     void move_to(int x, int y) {
         append_str("\x1b[" + std::to_string(y) + ";" + std::to_string(x) + "H");
