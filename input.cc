@@ -55,8 +55,8 @@ struct Key {
     constexpr Key(int codepoint) : type(Key::Char), codepoint(codepoint) {}
     constexpr Key(int codepoint, int modifiers) : type(Key::Char), codepoint(codepoint), modifiers(modifiers) {}
 
-    auto operator==(Key key) const { return key.type == this->type; }
-    auto operator!=(Key key) const { return key.type != this->type; }
+    auto operator==(Key key) const { return key.type == type; }
+    auto operator!=(Key key) const { return key.type != type; }
 
     inline bool ctrl() const {
         return (modifiers & KeyModifiers::CTRL) != 0;
@@ -149,6 +149,7 @@ std::optional<Key> Input::parse_ansi() {
         case 'Q': return Key::F2;
         case 'R': return Key::F3;
         case 'S': return Key::F4;
+        case 'Z': return Key(Key::Tab, KeyModifiers::SHIFT);
         case '~':
             switch (params[0][0]) 
             {
@@ -162,6 +163,7 @@ std::optional<Key> Input::parse_ansi() {
             case 19: return Key::F8;
             case 20: return Key::F9;
             case 21: return Key::F10;
+            case 23: return Key::F11;
             case 24: return Key::F12;
             case 29: return Key::Menu;
             }
