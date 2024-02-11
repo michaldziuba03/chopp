@@ -1,7 +1,8 @@
+#include <locale>
+#include <iostream>
 #include "terminal.cc"
 #include "input.cc"
 #include "utf8.cc"
-#include <iostream>
 
 void cleanup() {
     terminal::disable_raw();
@@ -10,12 +11,14 @@ void cleanup() {
 }
 
 int main() {
+    std::setlocale(LC_ALL, "C.utf8");
     terminal::enable_raw();
     terminal::enter_alternate_screen();
     //terminal::enable_mouse_tracking();
     atexit(cleanup);
 
     Input input;
+
     while (true) {
         auto event = input.get_next_key();
         if (event.has_value()) {
@@ -23,8 +26,7 @@ int main() {
             if (key.ctrl()) {
                 std::cout << "^";
             }
-
-            if (key.shift()) {
+            else if (key.shift()) {
                 std::cout << "⇧";
             }
             std::cout << "[" << key.type << "] ";

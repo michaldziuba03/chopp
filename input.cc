@@ -1,14 +1,13 @@
 #include <optional>
 #include <unistd.h>
-#include <iostream>
-#include "utf8.cc"
-#include <string.h>
 #include <string>
 #include <vector>
+#include "utf8.cc"
 
 enum KeyModifiers {
     CTRL = 1,
     SHIFT = 2,
+    ALT = 4,
 };
 
 struct Key {
@@ -72,17 +71,13 @@ struct Key {
     }
 };
 
-inline int to_digit(char c) {
-    return c - '0';
-}
-
 struct Param {
 private:
     int param = 0;
     std::vector<int> subparams;
 public:
     void append_digit(char c) {
-        param = to_digit(c) + param * 10;
+        param = (c - '0') + param * 10;
     }
     void add_subparam() {
         subparams.push_back(param);
@@ -108,10 +103,6 @@ std::optional<char> Input::get_char() {
     }
 
     return {};
-}
-
-inline bool is_cntrl(const char c) {
-    return iscntrl(c) || c == ' ';
 }
 
 std::vector<Param> Input::parse_params(std::optional<char> &c) {
@@ -188,10 +179,6 @@ std::optional<Key> Input::parse_chars(char c) {
         return Key((c + 'A' - 1), KeyModifiers::CTRL);
     }
 
-    if (isupper(c)) {
-        return Key(c, KeyModifiers::SHIFT);
-    }
-
     size_t cp_size = utf8::codepoint_size(c);
     if (!cp_size) {
         return {};
@@ -203,7 +190,12 @@ std::optional<Key> Input::parse_chars(char c) {
         chars[i] = get_char().value_or(0);
     }
 
-    return Key(utf8::utf8_to_codepoint(chars));
+    int codepoint = utf8::utf8_to_codepoint(chars);
+    if (utf8::is_uppercase(codepoint)) {
+        return Key(codepoint, KeyModifiers::SHIFT);
+    }
+
+    return Key(codepoint);
 }
 
 std::optional<Key> Input::get_next_key() {
@@ -211,7 +203,6 @@ std::optional<Key> Input::get_next_key() {
     if (!c) {
         return {};
     }
-    //std::cout << int(*c) << "\r\n";
     switch (*c) {
         case 0: return Key(Key::Space, KeyModifiers::CTRL);
         case '\r': return Key::Return;

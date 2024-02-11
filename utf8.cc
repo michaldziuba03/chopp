@@ -51,4 +51,12 @@ namespace utf8 {
 
         return utf8;
     }
+
+    inline bool is_uppercase(int codepoint) {
+        return std::iswupper(codepoint);
+    }
+
+    inline bool is_lowercase(int codepoint) {
+        return std::iswlower(codepoint);
+    }
 }
