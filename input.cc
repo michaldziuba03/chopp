@@ -5,6 +5,8 @@
 #include <string.h>
 #include <vector>
 
+#define CTRL_MODIFIER 1
+
 struct Key {
     enum KeyType {
         Unknown = 0,
@@ -34,47 +36,31 @@ struct Key {
         PageUp,
         PageDown,
         Insert,
+        End,
+        Home,
+        Menu,
     };
 
     KeyType type = Unknown;
     int modifiers = 0;
-
-    char bytes[5]{};
-    size_t length = 0;
+    int codepoint = 0;
 
     Key() = default;
     constexpr Key(KeyType type) : type(type) {}
+    constexpr Key(int codepoint) : type(Key::Char), codepoint(codepoint) {}
 
-    Key(const char *bytes, size_t length) : type(Key::Char), length(length) {
-        std::copy(bytes, bytes+length, this->bytes);
-    }
-
-    auto operator==(const char *c) const { return strcmp(c, bytes) == 0; }
-    auto operator!=(const char *c) const { return strcmp(c, bytes) != 0; }
     auto operator==(Key key) const { return key.type == this->type; }
     auto operator!=(Key key) const { return key.type != this->type; }
-};
 
-class Input {
-public:
-    std::optional<char> get_char();
-    std::optional<Key> get_next_key();
-    std::optional<Key> parse_chars(char);
-    std::optional<Key> parse_cntrl(char);
-    std::optional<Key> parse_ansi();
-};
-
-std::optional<char> Input::get_char() {
-    if (char c = 0; read(STDIN_FILENO, &c, 1) == 1) {
-        return c;
+    bool ctrl() {
+        return modifiers & CTRL_MODIFIER != 0;
     }
 
-    return {};
-}
-
-inline bool is_cntrl(const char c) {
-    return iscntrl(c) || c == ' ';
-}
+    static Key with_ctrl(Key key) {
+        key.modifiers |= CTRL_MODIFIER;
+        return key;
+    }
+};
 
 inline int to_digit(char c) {
     return c - '0';
@@ -97,10 +83,28 @@ public:
     }
 };
 
-std::optional<Key> Input::parse_ansi() {
-    auto c = get_char();
-    if (!c) return {};
+class Input {
+    std::optional<char> get_char();
+    std::optional<Key> parse_chars(char);
+    std::optional<Key> parse_ansi();
+    std::vector<Param> parse_params(std::optional<char>&);
+public:
+    std::optional<Key> get_next_key();
+};
 
+std::optional<char> Input::get_char() {
+    if (char c = 0; read(STDIN_FILENO, &c, 1) == 1) {
+        return c;
+    }
+
+    return {};
+}
+
+inline bool is_cntrl(const char c) {
+    return iscntrl(c) || c == ' ';
+}
+
+std::vector<Param> Input::parse_params(std::optional<char> &c) {
     std::vector<Param> params;
     Param param;
 
@@ -125,11 +129,21 @@ std::optional<Key> Input::parse_ansi() {
         c = get_char();
     }
 
+    return params;
+}
+
+std::optional<Key> Input::parse_ansi() {
+    auto c = get_char(); // character after \x1b[ or \x1bO
+    if (!c) return {};
+    auto params = parse_params(c);
+
     switch (*c) {
         case 'A': return Key::Up;
         case 'B': return Key::Down;
         case 'C': return Key::Right;
         case 'D': return Key::Left;
+        case 'F': return Key::End;
+        case 'H': return Key::Home;
         case 'P': return Key::F1;
         case 'Q': return Key::F2;
         case 'R': return Key::F3;
@@ -148,46 +162,34 @@ std::optional<Key> Input::parse_ansi() {
             case 20: return Key::F9;
             case 21: return Key::F10;
             case 24: return Key::F12;
+            case 29: return Key::Menu;
             }
     }
 
     return {};
 }
 
-std::optional<Key> Input::parse_cntrl(char c) {
-    switch (c) {
-        case '\n': return Key::Return;
-        case '\r': return Key::Return;
-        case '\t': return Key::Tab;
-        case '\b': return Key::Backspace;
-        case 127: return Key::Backspace;
-        case ' ': return Key::Space;
+std::optional<Key> Input::parse_chars(char c) {    
+    if (c > 0 && c < 27) {
+        return Key::with_ctrl(Key((c + 'a' - 1)));
     }
 
-    if (c == '\x1b') {
-        if (auto next = get_char(); next && *next == '[' || *next == 'O')
-            return parse_ansi();
+    if (c >= 27 && c < 32) {
+        return Key::with_ctrl(Key((c + 'A' - 1)));
     }
 
-    return {};
-}
-
-std::optional<Key> Input::parse_chars(char c) {
     size_t cp_size = utf8::codepoint_size(c);
     if (!cp_size) {
         return {};
     }
 
-    char *chars = new char[cp_size];
+    char chars[5]{};
     chars[0] = c;
     for (int i = 1; i < cp_size; ++i) {
         chars[i] = get_char().value_or(0);
     }
 
-    Key key(chars, cp_size);
-    delete[] chars;
-
-    return key;
+    return Key(utf8::utf8_to_codepoint(chars));
 }
 
 std::optional<Key> Input::get_next_key() {
@@ -195,9 +197,18 @@ std::optional<Key> Input::get_next_key() {
     if (!c) {
         return {};
     }
-    if (is_cntrl(*c)) {
-        return parse_cntrl(*c);
+    //std::cout << int(*c) << "\r\n";
+    switch (*c) {
+        case 0: return Key::with_ctrl(Key::Space);
+        case '\r': return Key::Return;
+        case '\n': return Key::Return;
+        case '\t': return Key::Tab;
+        case '\b': return Key::Backspace;
+        case 127: return Key::Backspace;
+        case ' ': return Key::Space;
+        case '\x1b':
+            auto next = get_char(); 
+            return (next && (*next == '[' || *next == 'O')) ? parse_ansi() : std::nullopt;
     }
-
     return parse_chars(*c);
 }
