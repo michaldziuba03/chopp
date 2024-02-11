@@ -13,7 +13,7 @@ enum KeyModifiers {
 struct Key {
     enum KeyType {
         Unknown = 0,
-        Return,
+        Enter,
         Escape,
         Delete,
         Tab,
@@ -110,15 +110,13 @@ std::vector<Param> Input::parse_params(std::optional<char> &c) {
     Param param;
 
     while (c) {
-        if (isdigit(*c)) {
+        if (isdigit(*c))
             param.append_digit(*c);
-        }
+        else if (*c == ':')
+            param.add_subparam();
         else if (*c == ';') {
             params.push_back(param);
             param = {};
-        }
-        else if (*c == ':') {
-            param.add_subparam();
         }
         else {
             param.add_subparam();
@@ -192,7 +190,7 @@ std::optional<Key> Input::parse_chars(char c) {
         chars[i] = get_char().value_or(0);
     }
 
-    int codepoint = utf8::utf8_to_codepoint(chars);
+    int codepoint = utf8::to_codepoint(chars);
     if (utf8::is_uppercase(codepoint)) {
         return Key(codepoint, KeyModifiers::SHIFT);
     }
@@ -207,15 +205,19 @@ std::optional<Key> Input::get_next_key() {
     }
     switch (*c) {
         case 0: return Key(Key::Space, KeyModifiers::CTRL);
-        case '\r': return Key::Return;
-        case '\n': return Key::Return;
+        case '\r': return Key::Enter;
+        case '\n': return Key::Enter;
         case '\t': return Key::Tab;
         case '\b': return Key::Backspace;
         case 127: return Key::Backspace;
         case ' ': return Key::Space;
         case '\x1b':
-            auto next = get_char(); 
-            return (next && (*next == '[' || *next == 'O')) ? parse_ansi() : std::nullopt;
+            auto next = get_char().value_or(-1);
+            switch (next) {
+                case '[': return parse_ansi();
+                case 'O': return parse_ansi();
+            }
+            return {};
     }
     return parse_chars(*c);
 }

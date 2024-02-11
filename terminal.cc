@@ -123,4 +123,9 @@ namespace terminal {
     void background(RGB rgb) {
         append_str(backgroundRGB(rgb));
     }
+
+    void set_title(const std::string& title) {
+        auto str = "\x1b]2;" + title + "\007";
+        write(STDOUT_FILENO, str.c_str(), str.length());
+    }
 }

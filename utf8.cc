@@ -14,7 +14,7 @@ namespace utf8 {
         return 0;
     }
 
-    int utf8_to_codepoint(const char *utf8) {
+    int to_codepoint(const char *utf8) {
         unsigned char *bytes = (unsigned char *)utf8;
         
         if (bytes[0] < 0x80) {

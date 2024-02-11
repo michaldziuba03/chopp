@@ -12,6 +12,7 @@ void cleanup() {
 
 int main() {
     std::setlocale(LC_ALL, "C.utf8");
+    terminal::set_title("Test - Chopp");
     terminal::enable_raw();
     terminal::enter_alternate_screen();
     //terminal::enable_mouse_tracking();
