@@ -3,9 +3,13 @@
 #include <iostream>
 #include "utf8.cc"
 #include <string.h>
+#include <string>
 #include <vector>
 
-#define CTRL_MODIFIER 1
+enum KeyModifiers {
+    CTRL = 1,
+    SHIFT = 2,
+};
 
 struct Key {
     enum KeyType {
@@ -47,18 +51,24 @@ struct Key {
 
     Key() = default;
     constexpr Key(KeyType type) : type(type) {}
+    constexpr Key(KeyType type, int modifiers) : type(type), modifiers(modifiers) {}
+
     constexpr Key(int codepoint) : type(Key::Char), codepoint(codepoint) {}
+    constexpr Key(int codepoint, int modifiers) : type(Key::Char), codepoint(codepoint), modifiers(modifiers) {}
 
     auto operator==(Key key) const { return key.type == this->type; }
     auto operator!=(Key key) const { return key.type != this->type; }
 
-    bool ctrl() {
-        return modifiers & CTRL_MODIFIER != 0;
+    inline bool ctrl() const {
+        return (modifiers & KeyModifiers::CTRL) != 0;
     }
 
-    static Key with_ctrl(Key key) {
-        key.modifiers |= CTRL_MODIFIER;
-        return key;
+    inline bool shift() const {
+        return (modifiers & KeyModifiers::SHIFT) != 0;
+    }
+
+    inline std::string str() const {
+        return utf8::from_codepoint(codepoint);
     }
 };
 
@@ -171,11 +181,15 @@ std::optional<Key> Input::parse_ansi() {
 
 std::optional<Key> Input::parse_chars(char c) {    
     if (c > 0 && c < 27) {
-        return Key::with_ctrl(Key((c + 'a' - 1)));
+        return Key((c + 'a' - 1), KeyModifiers::CTRL);
     }
 
     if (c >= 27 && c < 32) {
-        return Key::with_ctrl(Key((c + 'A' - 1)));
+        return Key((c + 'A' - 1), KeyModifiers::CTRL);
+    }
+
+    if (isupper(c)) {
+        return Key(c, KeyModifiers::SHIFT);
     }
 
     size_t cp_size = utf8::codepoint_size(c);
@@ -199,7 +213,7 @@ std::optional<Key> Input::get_next_key() {
     }
     //std::cout << int(*c) << "\r\n";
     switch (*c) {
-        case 0: return Key::with_ctrl(Key::Space);
+        case 0: return Key(Key::Space, KeyModifiers::CTRL);
         case '\r': return Key::Return;
         case '\n': return Key::Return;
         case '\t': return Key::Tab;

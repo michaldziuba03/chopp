@@ -23,9 +23,13 @@ int main() {
             if (key.ctrl()) {
                 std::cout << "^";
             }
+
+            if (key.shift()) {
+                std::cout << "⇧";
+            }
             std::cout << "[" << key.type << "] ";
             if (key == Key::Char) {
-                std::cout << utf8::from_codepoint(key.codepoint) << "(" << key.codepoint << ") ";
+                std::cout << key.str() << "(" << key.codepoint << ") ";
 
                 if (key.codepoint == 'c' && key.ctrl()) {
                     std::cout << "\r" << std::endl;
