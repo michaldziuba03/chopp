@@ -43,6 +43,14 @@ namespace terminal {
         tcsetattr(STDIN_FILENO, TCSAFLUSH, &term);
     }
 
+    void use_kitty_protocol() {
+        write_stdin("\x1b[>1u");
+    }
+
+    void disable_kitty_protocol() {
+        write_stdin("\x1b[<u");
+    }
+
     void enter_alternate_screen() {
         write_stdin("\x1b[?1049h");
     }

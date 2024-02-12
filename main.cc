@@ -6,6 +6,7 @@
 
 void cleanup() {
     terminal::disable_raw();
+    terminal::disable_kitty_protocol();
     terminal::leave_alternate_screen();
     //terminal::disable_mouse_tracking();
 }
@@ -15,6 +16,7 @@ int main() {
     terminal::set_title("Test - Chopp");
     terminal::enable_raw();
     terminal::enter_alternate_screen();
+    terminal::use_kitty_protocol();
     //terminal::enable_mouse_tracking();
     atexit(cleanup);
 

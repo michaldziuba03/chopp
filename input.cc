@@ -5,9 +5,14 @@
 #include "utf8.cc"
 
 enum KeyModifiers {
-    CTRL = 1,
-    SHIFT = 2,
-    ALT = 4,
+    SHIFT = 1,
+    ALT = 2,
+    CTRL = 4,
+    SUPER = 8,
+    HYPER = 16,
+    META = 32,
+    CAPS_LOCK = 64,
+    NUM_LOCK = 128,
 };
 
 struct Key {
@@ -57,6 +62,7 @@ struct Key {
 
     auto operator==(Key key) const { return key.type == type; }
     auto operator!=(Key key) const { return key.type != type; }
+    void set_modifier(int modifiers) { this->modifiers = modifiers; }
 
     inline bool ctrl() const {
         return (modifiers & KeyModifiers::CTRL) != 0;
@@ -64,6 +70,10 @@ struct Key {
 
     inline bool shift() const {
         return (modifiers & KeyModifiers::SHIFT) != 0;
+    }
+
+    inline bool alt() const {
+        return (modifiers & KeyModifiers::ALT) != 0;
     }
 
     inline std::string str() const {
@@ -76,7 +86,7 @@ private:
     int param = 0;
     std::vector<int> subparams;
 public:
-    void append_digit(char c) {
+    void append_digit(unsigned char c) {
         param = (c - '0') + param * 10;
     }
     void add_subparam() {
@@ -91,6 +101,7 @@ public:
 class Input {
     std::optional<char> get_char();
     std::optional<Key> parse_chars(char);
+    std::optional<Key> parse_u_key(std::vector<Param>);
     std::optional<Key> parse_ansi();
     std::vector<Param> parse_params(std::optional<char>&);
 public:
@@ -98,7 +109,7 @@ public:
 };
 
 std::optional<char> Input::get_char() {
-    if (char c = 0; read(STDIN_FILENO, &c, 1) == 1) {
+    if (unsigned char c = 0; read(STDIN_FILENO, &c, 1) == 1) {
         return c;
     }
 
@@ -115,6 +126,7 @@ std::vector<Param> Input::parse_params(std::optional<char> &c) {
         else if (*c == ':')
             param.add_subparam();
         else if (*c == ';') {
+            param.add_subparam();
             params.push_back(param);
             param = {};
         }
@@ -129,6 +141,28 @@ std::vector<Param> Input::parse_params(std::optional<char> &c) {
     }
 
     return params;
+}
+
+std::optional<Key> Input::parse_u_key(std::vector<Param> params) {
+    int codepoint = params[0][0];
+    int modifier_mask = std::max(params[1][0] - 1, 0);
+
+    auto detect_key = [codepoint]() -> Key {
+        switch(codepoint) {
+            case -1: return {};
+            case '\r': return Key::Enter;
+            case '\n': return Key::Enter;
+            case '\t': return Key::Tab;
+            case '\b': return Key::Backspace;
+            case 127: return Key::Backspace;
+            case ' ': return Key::Space;
+        }
+        return Key(codepoint);
+    };
+
+    Key key = detect_key();
+    key.set_modifier(modifier_mask);
+    return key;
 }
 
 std::optional<Key> Input::parse_ansi() {
@@ -148,6 +182,8 @@ std::optional<Key> Input::parse_ansi() {
         case 'R': return Key::F3;
         case 'S': return Key::F4;
         case 'Z': return Key(Key::Tab, KeyModifiers::SHIFT);
+        case 'u':
+            return parse_u_key(params);
         case '~':
             switch (params[0][0]) 
             {
