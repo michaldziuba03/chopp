@@ -4,6 +4,8 @@
 #include <vector>
 #include "utf8.cc"
 
+#define INVALID_PARAM -1
+
 enum KeyModifiers {
     SHIFT = 1,
     ALT = 2,
@@ -94,7 +96,7 @@ public:
         param = 0;
     }
     int operator[](int i) const {
-        return subparams.empty() ? -1 : subparams[i]; 
+        return subparams.empty() ? INVALID_PARAM : subparams[i]; 
     }
 };
 
@@ -143,21 +145,51 @@ std::vector<Param> Input::parse_params(std::optional<char> &c) {
     return params;
 }
 
-std::optional<Key> Input::parse_u_key(std::vector<Param> params) {
-    int codepoint = params[0][0];
-    int modifier_mask = std::max(params[1][0] - 1, 0);
+struct KeyboardProtocol {
+    int codepoint = INVALID_PARAM;
+    int modifier_mask = 0;
 
-    auto detect_key = [codepoint]() -> Key {
-        switch(codepoint) {
-            case -1: return {};
+    KeyboardProtocol(const std::vector<Param> &params) {
+        codepoint = params[0][0];
+        if (params.size() > 1) {
+            modifier_mask = params[1][0] - 1;
+        }
+    }
+};
+
+std::optional<Key> Input::parse_u_key(std::vector<Param> params) {
+    KeyboardProtocol k(params);
+    const int modifier_mask = std::max(k.modifier_mask, 0);
+    if (k.codepoint == INVALID_PARAM) {
+        return {};
+    }
+
+    auto detect_key = [k]() -> Key {
+        switch(k.codepoint) {
+            case '\x1b': return Key::Escape;
             case '\r': return Key::Enter;
             case '\n': return Key::Enter;
             case '\t': return Key::Tab;
             case '\b': return Key::Backspace;
             case 127: return Key::Backspace;
             case ' ': return Key::Space;
+            case 57410: return Key('/');
+            case 57411: return Key('*');
+            case 57412: return Key('-');
+            case 57413: return Key('+');
+            case 57414: return Key::Enter;
+            case 57417: return Key::Left;
+            case 57418: return Key::Right;
+            case 57419: return Key::Up;
+            case 57420: return Key::Down;
+            case 57421: return Key::PageUp;
+            case 57422: return Key::PageDown;
+            case 57423: return Key::Home;
+            case 57424: return Key::End;
+            case 57425: return Key::Insert;
+            case 57426: return Key::Delete;
         }
-        return Key(codepoint);
+        return Key(k.codepoint);
     };
 
     Key key = detect_key();
@@ -182,8 +214,7 @@ std::optional<Key> Input::parse_ansi() {
         case 'R': return Key::F3;
         case 'S': return Key::F4;
         case 'Z': return Key(Key::Tab, KeyModifiers::SHIFT);
-        case 'u':
-            return parse_u_key(params);
+        case 'u': return parse_u_key(params);
         case '~':
             switch (params[0][0]) 
             {
