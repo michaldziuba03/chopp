@@ -29,7 +29,7 @@ int main() {
             if (key.ctrl()) {
                 std::cout << "^";
             }
-            else if (key.shift()) {
+            if (key.shift()) {
                 std::cout << "⇧";
             }
             std::cout << "[" << key.type << "] ";

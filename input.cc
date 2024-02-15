@@ -43,6 +43,29 @@ struct Key {
         F10,
         F11,
         F12,
+        F13,
+        F14,
+        F15,
+        F16,
+        F17,
+        F18,
+        F19,
+        F20,
+        F21,
+        F22,
+        F23,
+        F24,
+        F25,
+        F26,
+        F27,
+        F28,
+        F29,
+        F30,
+        F31,
+        F32,
+        F33,
+        F34,
+        F35,
         PageUp,
         PageDown,
         Insert,
@@ -145,6 +168,10 @@ std::vector<Param> Input::parse_params(std::optional<char> &c) {
     return params;
 }
 
+inline bool is_private_area(int codepoint) {
+    return (codepoint >= 57344 && codepoint <= 63743) ? true : false;
+}
+
 struct KeyboardProtocol {
     int codepoint = INVALID_PARAM;
     int modifier_mask = 0;
@@ -173,11 +200,24 @@ std::optional<Key> Input::parse_u_key(std::vector<Param> params) {
             case '\b': return Key::Backspace;
             case 127: return Key::Backspace;
             case ' ': return Key::Space;
+            case 57399: return Key('0');
+            case 57400: return Key('1');
+            case 57401: return Key('2');
+            case 57402: return Key('3');
+            case 57403: return Key('4');
+            case 57404: return Key('5');
+            case 57405: return Key('6');
+            case 57406: return Key('7');
+            case 57407: return Key('8');
+            case 57408: return Key('9');
+            case 57409: return Key('.');
             case 57410: return Key('/');
             case 57411: return Key('*');
             case 57412: return Key('-');
             case 57413: return Key('+');
             case 57414: return Key::Enter;
+            case 57415: return Key('=');
+            case 57416: return Key(',');
             case 57417: return Key::Left;
             case 57418: return Key::Right;
             case 57419: return Key::Up;
@@ -188,7 +228,31 @@ std::optional<Key> Input::parse_u_key(std::vector<Param> params) {
             case 57424: return Key::End;
             case 57425: return Key::Insert;
             case 57426: return Key::Delete;
+            case 57376: return Key::F13;
+            case 57377: return Key::F14;
+            case 57378: return Key::F15;
+            case 57379: return Key::F16;
+            case 57380: return Key::F17;
+            case 57381: return Key::F18;
+            case 57382: return Key::F19;
+            case 57383: return Key::F20;
+            case 57384: return Key::F21;
+            case 57385: return Key::F22;
+            case 57386: return Key::F23;
+            case 57387: return Key::F24;
+            case 57388: return Key::F25;
+            case 57389: return Key::F26;
+            case 57390: return Key::F27;
+            case 57391: return Key::F28;
+            case 57392: return Key::F29;
+            case 57393: return Key::F30;
+            case 57394: return Key::F31;
+            case 57395: return Key::F32;
+            case 57396: return Key::F33;
+            case 57397: return Key::F34;
+            case 57398: return Key::F35;
         }
+        if (is_private_area(k.codepoint)) return Key::Unknown;
         return Key(k.codepoint);
     };
 
