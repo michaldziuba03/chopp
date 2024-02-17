@@ -32,6 +32,11 @@ int main() {
             if (key.shift()) {
                 std::cout << "⇧";
             }
+
+            if (key.alt()) {
+                std::cout << "?";
+            }
+
             std::cout << "[" << key.type << "] ";
             if (key == Key::Char) {
                 std::cout << key.str() << "(" << key.codepoint << ") ";

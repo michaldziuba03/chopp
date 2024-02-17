@@ -4,8 +4,6 @@
 #include <vector>
 #include "utf8.cc"
 
-#define INVALID_PARAM -1
-
 enum KeyModifiers {
     SHIFT = 1,
     ALT = 2,
@@ -118,15 +116,16 @@ public:
         subparams.push_back(param);
         param = 0;
     }
+    size_t size() const { return subparams.size(); }
     int operator[](int i) const {
-        return subparams.empty() ? INVALID_PARAM : subparams[i]; 
+        return (size() > i) ? subparams[i] : 0; 
     }
 };
 
 class Input {
     std::optional<char> get_char();
     std::optional<Key> parse_chars(char);
-    std::optional<Key> parse_u_key(std::vector<Param>);
+    std::optional<Key> map_u_key(int codepoint);
     std::optional<Key> parse_ansi();
     std::vector<Param> parse_params(std::optional<char>&);
 public:
@@ -172,133 +171,125 @@ inline bool is_private_area(int codepoint) {
     return (codepoint >= 57344 && codepoint <= 63743) ? true : false;
 }
 
-struct KeyboardProtocol {
-    int codepoint = INVALID_PARAM;
-    int modifier_mask = 0;
-
-    KeyboardProtocol(const std::vector<Param> &params) {
-        codepoint = params[0][0];
-        if (params.size() > 1) {
-            modifier_mask = params[1][0] - 1;
-        }
+std::optional<Key> Input::map_u_key(int codepoint) {
+    switch(codepoint) {
+        case '\x1b': return Key::Escape;
+        case '\r': return Key::Enter;
+        case '\n': return Key::Enter;
+        case '\t': return Key::Tab;
+        case '\b': return Key::Backspace;
+        case 127: return Key::Backspace;
+        case ' ': return Key::Space;
+        case 57399: return Key('0');
+        case 57400: return Key('1');
+        case 57401: return Key('2');
+        case 57402: return Key('3');
+        case 57403: return Key('4');
+        case 57404: return Key('5');
+        case 57405: return Key('6');
+        case 57406: return Key('7');
+        case 57407: return Key('8');
+        case 57408: return Key('9');
+        case 57409: return Key('.');
+        case 57410: return Key('/');
+        case 57411: return Key('*');
+        case 57412: return Key('-');
+        case 57413: return Key('+');
+        case 57414: return Key::Enter;
+        case 57415: return Key('=');
+        case 57416: return Key(',');
+        case 57417: return Key::Left;
+        case 57418: return Key::Right;
+        case 57419: return Key::Up;
+        case 57420: return Key::Down;
+        case 57421: return Key::PageUp;
+        case 57422: return Key::PageDown;
+        case 57423: return Key::Home;
+        case 57424: return Key::End;
+        case 57425: return Key::Insert;
+        case 57426: return Key::Delete;
+        case 57376: return Key::F13;
+        case 57377: return Key::F14;
+        case 57378: return Key::F15;
+        case 57379: return Key::F16;
+        case 57380: return Key::F17;
+        case 57381: return Key::F18;
+        case 57382: return Key::F19;
+        case 57383: return Key::F20;
+        case 57384: return Key::F21;
+        case 57385: return Key::F22;
+        case 57386: return Key::F23;
+        case 57387: return Key::F24;
+        case 57388: return Key::F25;
+        case 57389: return Key::F26;
+        case 57390: return Key::F27;
+        case 57391: return Key::F28;
+        case 57392: return Key::F29;
+        case 57393: return Key::F30;
+        case 57394: return Key::F31;
+        case 57395: return Key::F32;
+        case 57396: return Key::F33;
+        case 57397: return Key::F34;
+        case 57398: return Key::F35;
     }
-};
+    return is_private_area(codepoint) ? Key::Unknown : Key(codepoint);
+}
 
-std::optional<Key> Input::parse_u_key(std::vector<Param> params) {
-    KeyboardProtocol k(params);
-    const int modifier_mask = std::max(k.modifier_mask, 0);
-    if (k.codepoint == INVALID_PARAM) {
-        return {};
+int get_modifiers(std::vector<Param> params) {
+    if (params.size() > 1) {
+        return std::max(params[1][0] - 1, 0);
     }
 
-    auto detect_key = [k]() -> Key {
-        switch(k.codepoint) {
-            case '\x1b': return Key::Escape;
-            case '\r': return Key::Enter;
-            case '\n': return Key::Enter;
-            case '\t': return Key::Tab;
-            case '\b': return Key::Backspace;
-            case 127: return Key::Backspace;
-            case ' ': return Key::Space;
-            case 57399: return Key('0');
-            case 57400: return Key('1');
-            case 57401: return Key('2');
-            case 57402: return Key('3');
-            case 57403: return Key('4');
-            case 57404: return Key('5');
-            case 57405: return Key('6');
-            case 57406: return Key('7');
-            case 57407: return Key('8');
-            case 57408: return Key('9');
-            case 57409: return Key('.');
-            case 57410: return Key('/');
-            case 57411: return Key('*');
-            case 57412: return Key('-');
-            case 57413: return Key('+');
-            case 57414: return Key::Enter;
-            case 57415: return Key('=');
-            case 57416: return Key(',');
-            case 57417: return Key::Left;
-            case 57418: return Key::Right;
-            case 57419: return Key::Up;
-            case 57420: return Key::Down;
-            case 57421: return Key::PageUp;
-            case 57422: return Key::PageDown;
-            case 57423: return Key::Home;
-            case 57424: return Key::End;
-            case 57425: return Key::Insert;
-            case 57426: return Key::Delete;
-            case 57376: return Key::F13;
-            case 57377: return Key::F14;
-            case 57378: return Key::F15;
-            case 57379: return Key::F16;
-            case 57380: return Key::F17;
-            case 57381: return Key::F18;
-            case 57382: return Key::F19;
-            case 57383: return Key::F20;
-            case 57384: return Key::F21;
-            case 57385: return Key::F22;
-            case 57386: return Key::F23;
-            case 57387: return Key::F24;
-            case 57388: return Key::F25;
-            case 57389: return Key::F26;
-            case 57390: return Key::F27;
-            case 57391: return Key::F28;
-            case 57392: return Key::F29;
-            case 57393: return Key::F30;
-            case 57394: return Key::F31;
-            case 57395: return Key::F32;
-            case 57396: return Key::F33;
-            case 57397: return Key::F34;
-            case 57398: return Key::F35;
-        }
-        if (is_private_area(k.codepoint)) return Key::Unknown;
-        return Key(k.codepoint);
-    };
-
-    Key key = detect_key();
-    key.set_modifier(modifier_mask);
-    return key;
+    return 0;
 }
 
 std::optional<Key> Input::parse_ansi() {
     auto c = get_char(); // character after \x1b[ or \x1bO
     if (!c) return {};
     auto params = parse_params(c);
+    int modifiers = get_modifiers(params);
 
-    switch (*c) {
-        case 'A': return Key::Up;
-        case 'B': return Key::Down;
-        case 'C': return Key::Right;
-        case 'D': return Key::Left;
-        case 'F': return Key::End;
-        case 'H': return Key::Home;
-        case 'P': return Key::F1;
-        case 'Q': return Key::F2;
-        case 'R': return Key::F3;
-        case 'S': return Key::F4;
-        case 'Z': return Key(Key::Tab, KeyModifiers::SHIFT);
-        case 'u': return parse_u_key(params);
-        case '~':
-            switch (params[0][0]) 
-            {
-            case 2: return Key::Insert;
-            case 3: return Key::Delete;
-            case 5: return Key::PageUp;
-            case 6: return Key::PageDown;
-            case 15: return Key::F5;
-            case 17: return Key::F6;
-            case 18: return Key::F7;
-            case 19: return Key::F8;
-            case 20: return Key::F9;
-            case 21: return Key::F10;
-            case 23: return Key::F11;
-            case 24: return Key::F12;
-            case 29: return Key::Menu;
-            }
+    auto map_key = [&]() -> std::optional<Key>  {
+        switch (*c) {
+            case 'A': return Key::Up;
+            case 'B': return Key::Down;
+            case 'C': return Key::Right;
+            case 'D': return Key::Left;
+            case 'F': return Key::End;
+            case 'H': return Key::Home;
+            case 'P': return Key::F1;
+            case 'Q': return Key::F2;
+            case 'R': return Key::F3;
+            case 'S': return Key::F4;
+            case 'Z': return Key(Key::Tab, KeyModifiers::SHIFT);
+            case 'u': return map_u_key(params[0][0]);
+            case '~':
+                switch (params[0][0]) 
+                {
+                case 2: return Key::Insert;
+                case 3: return Key::Delete;
+                case 5: return Key::PageUp;
+                case 6: return Key::PageDown;
+                case 15: return Key::F5;
+                case 17: return Key::F6;
+                case 18: return Key::F7;
+                case 19: return Key::F8;
+                case 20: return Key::F9;
+                case 21: return Key::F10;
+                case 23: return Key::F11;
+                case 24: return Key::F12;
+                case 29: return Key::Menu;
+                }
+            default: return {};
+        }
+    };
+
+    auto key = map_key();
+    if (key && modifiers) {
+        key->set_modifier(modifiers);
     }
 
-    return {};
+    return key;
 }
 
 std::optional<Key> Input::parse_chars(char c) {    
@@ -318,7 +309,7 @@ std::optional<Key> Input::parse_chars(char c) {
     char chars[5]{};
     chars[0] = c;
     for (int i = 1; i < cp_size; ++i) {
-        chars[i] = get_char().value_or(0);
+        chars[i] = get_char().value_or(255);
     }
 
     int codepoint = utf8::to_codepoint(chars);
