@@ -122,14 +122,38 @@ public:
     }
 };
 
+struct Mouse {
+    int cx = 1, cy = 1;
+
+    constexpr Mouse(int cx, int cy) : cx(cx), cy(cy) {}
+};
+
+enum EventType {
+    MouseEvent,
+    KeyEvent,
+};
+
+struct Event {
+    EventType type;
+    union {
+        Key key;
+        Mouse mouse;
+    };
+
+    Event(Key key) : type(KeyEvent), key(key) {}
+    Event(Key::KeyType type) : type(KeyEvent) { key = Key(type); }
+    Event(Mouse mouse) : type(MouseEvent), mouse(mouse) {}
+};
+
 class Input {
+    std::optional<Mouse> parse_sgr_mouse();
     std::optional<char> get_char();
-    std::optional<Key> parse_chars(char);
+    std::optional<Event> parse_chars(char);
     std::optional<Key> map_u_key(int codepoint);
-    std::optional<Key> parse_ansi();
+    std::optional<Event> parse_ansi();
     std::vector<Param> parse_params(std::optional<char>&);
 public:
-    std::optional<Key> get_next_key();
+    std::optional<Event> next_event();
 };
 
 std::optional<char> Input::get_char() {
@@ -167,8 +191,8 @@ std::vector<Param> Input::parse_params(std::optional<char> &c) {
     return params;
 }
 
-inline bool is_private_area(int codepoint) {
-    return (codepoint >= 57344 && codepoint <= 63743) ? true : false;
+static inline bool is_private_area(int codepoint) {
+    return (codepoint >= 57344 && codepoint <= 63743);
 }
 
 std::optional<Key> Input::map_u_key(int codepoint) {
@@ -243,9 +267,25 @@ int get_modifiers(std::vector<Param> params) {
     return 0;
 }
 
-std::optional<Key> Input::parse_ansi() {
+std::optional<Mouse> Input::parse_sgr_mouse() {
+    auto c = get_char();
+    if (!c) return {};
+    auto params = parse_params(c);
+    if (params.size() < 3) return {};
+    if (*c != 'M') return {};
+
+    int type = params[0][0];
+    int cx = params[1][0];
+    int cy = params[2][0];
+
+    return Mouse(cx, cy);
+}
+
+std::optional<Event> Input::parse_ansi() {
     auto c = get_char(); // character after \x1b[ or \x1bO
     if (!c) return {};
+    if (c == '<') return parse_sgr_mouse();
+
     auto params = parse_params(c);
     int modifiers = get_modifiers(params);
 
@@ -292,7 +332,7 @@ std::optional<Key> Input::parse_ansi() {
     return key;
 }
 
-std::optional<Key> Input::parse_chars(char c) {    
+std::optional<Event> Input::parse_chars(char c) {    
     if (c > 0 && c < 27) {
         return Key((c + 'a' - 1), KeyModifiers::CTRL);
     }
@@ -320,7 +360,7 @@ std::optional<Key> Input::parse_chars(char c) {
     return Key(codepoint);
 }
 
-std::optional<Key> Input::get_next_key() {
+std::optional<Event> Input::next_event() {
     auto c = get_char();
     if (!c) {
         return {};

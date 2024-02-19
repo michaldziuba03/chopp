@@ -8,25 +8,11 @@ void cleanup() {
     terminal::disable_raw();
     terminal::disable_kitty_protocol();
     terminal::leave_alternate_screen();
-    //terminal::disable_mouse_tracking();
+    terminal::disable_mouse_tracking();
 }
 
-int main() {
-    std::setlocale(LC_ALL, "C.utf8");
-    terminal::set_title("Test - Chopp");
-    terminal::enable_raw();
-    terminal::enter_alternate_screen();
-    terminal::use_kitty_protocol();
-    //terminal::enable_mouse_tracking();
-    atexit(cleanup);
-
-    Input input;
-
-    while (true) {
-        auto event = input.get_next_key();
-        if (event.has_value()) {
-            auto key = event.value();
-            if (key.ctrl()) {
+void detect_key(const Key &key) {
+        if (key.ctrl()) {
                 std::cout << "^";
             }
             if (key.shift()) {
@@ -46,11 +32,31 @@ int main() {
                     exit(0);
                 }
             }
-
             std::cout << "\r\n";
+}
+
+void detect_mouse(const Mouse &mouse) {
+    std::cout << "cx(" << mouse.cx << "); cy(" << mouse.cy << ");\r\n";
+}
+
+int main() {
+    std::setlocale(LC_ALL, "C.utf8");
+    terminal::set_title("Test - Chopp");
+    terminal::enable_raw();
+    terminal::enter_alternate_screen();
+    terminal::use_kitty_protocol();
+    terminal::enable_mouse_tracking();
+    atexit(cleanup);
+
+    Input input;
+    while (true) {
+        auto event = input.next_event();
+        if (event) {
+            switch (event->type) {
+                case KeyEvent: detect_key(event->key); break;
+                case MouseEvent: detect_mouse(event->mouse); break;
+            }
         }
-        
     }
-    
     return 0;
 }
