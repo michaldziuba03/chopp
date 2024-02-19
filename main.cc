@@ -12,31 +12,51 @@ void cleanup() {
 }
 
 void detect_key(const Key &key) {
-        if (key.ctrl()) {
-                std::cout << "^";
-            }
-            if (key.shift()) {
-                std::cout << "⇧";
-            }
+    if (key.ctrl()) {
+        std::cout << "^";
+    }
+    if (key.shift()) {
+        std::cout << "⇧";
+    }
 
-            if (key.alt()) {
-                std::cout << "?";
-            }
+    if (key.alt()) {
+        std::cout << "?";
+    }
 
-            std::cout << "[" << key.type << "] ";
-            if (key == Key::Char) {
-                std::cout << key.str() << "(" << key.codepoint << ") ";
+    std::cout << "[" << key.type << "] ";
+    if (key == Key::Char) {
+        std::cout << key.str() << "(" << key.codepoint << ") ";
 
-                if (key.codepoint == 'c' && key.ctrl()) {
-                    std::cout << "\r" << std::endl;
-                    exit(0);
-                }
-            }
-            std::cout << "\r\n";
+        if (key.codepoint == 'c' && key.ctrl()) {
+            std::cout << "\r" << std::endl;
+            exit(0);
+        }
+    }
+    std::cout << "\r\n";
 }
 
 void detect_mouse(const Mouse &mouse) {
-    std::cout << "cx(" << mouse.cx << "); cy(" << mouse.cy << ");\r\n";
+    if (mouse.ctrl()) {
+        std::cout << "^";
+    }
+    if (mouse.shift()) {
+        std::cout << "⇧";
+    }
+
+    if (mouse.alt()) {
+        std::cout << "?";
+    }
+    
+    switch (mouse.type) {
+        case Mouse::Left: std::cout << "[LEFT]"; break;
+        case Mouse::Middle: std::cout << "[MIDDLE]"; break;
+        case Mouse::Right: std::cout << "[RIGHT]"; break;
+        case Mouse::ScrollUp:
+        case Mouse::ScrollDown:
+            std::cout << "[SCROLL]"; break;
+    }
+
+    std::cout << " cx(" << mouse.cx << "); cy(" << mouse.cy << ");\r\n";
 }
 
 int main() {

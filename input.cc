@@ -85,7 +85,7 @@ struct Key {
 
     auto operator==(Key key) const { return key.type == type; }
     auto operator!=(Key key) const { return key.type != type; }
-    void set_modifier(int modifiers) { this->modifiers = modifiers; }
+    void set_modifiers(int modifiers) { this->modifiers = modifiers; }
 
     inline bool ctrl() const {
         return (modifiers & KeyModifiers::CTRL) != 0;
@@ -123,9 +123,31 @@ public:
 };
 
 struct Mouse {
-    int cx = 1, cy = 1;
+    enum MouseType {
+        Unknown,
+        Left,
+        Middle,
+        Right,
+        ScrollUp,
+        ScrollDown,
+    };
 
-    constexpr Mouse(int cx, int cy) : cx(cx), cy(cy) {}
+    MouseType type;
+    int modifiers;
+    int cx = 1, cy = 1;
+    constexpr Mouse(MouseType type, int cx, int cy, int modifiers = 0) : type(type), cx(cx), cy(cy), modifiers(modifiers) {}
+
+    inline bool ctrl() const {
+        return (modifiers & KeyModifiers::CTRL) != 0;
+    }
+
+    inline bool shift() const {
+        return (modifiers & KeyModifiers::SHIFT) != 0;
+    }
+
+    inline bool alt() const {
+        return (modifiers & KeyModifiers::ALT) != 0;
+    }
 };
 
 enum EventType {
@@ -274,15 +296,41 @@ std::optional<Mouse> Input::parse_sgr_mouse() {
     if (params.size() < 3) return {};
     if (*c != 'M') return {};
 
-    int type = params[0][0];
+    int mask = params[0][0];
+    int button_num = (mask & 0x3) | ((mask & 0xC0) >> 4);
     int cx = params[1][0];
     int cy = params[2][0];
 
-    return Mouse(cx, cy);
+    int modifiers = 0;
+    if (mask & 0x4) {
+        modifiers |= KeyModifiers::SHIFT;
+    }
+
+    if (mask & 0x8) {
+        modifiers |= KeyModifiers::ALT;
+    }
+
+    if (mask & 0x10) {
+        modifiers |= KeyModifiers::CTRL;
+    }
+
+    auto detect_type = [button_num]() -> Mouse::MouseType {
+        switch (button_num) {
+            case 0: return Mouse::Left;
+            case 1: return Mouse::Middle;
+            case 2: return Mouse::Right;
+            case 4: return Mouse::ScrollUp;
+            case 5: return Mouse::ScrollDown;
+            default: return Mouse::Unknown;
+        }
+    };
+    auto type = detect_type();
+
+    return Mouse(type, cx, cy, modifiers);
 }
 
 std::optional<Event> Input::parse_ansi() {
-    auto c = get_char(); // character after \x1b[ or \x1bO
+    auto c = get_char();
     if (!c) return {};
     if (c == '<') return parse_sgr_mouse();
 
@@ -326,7 +374,7 @@ std::optional<Event> Input::parse_ansi() {
 
     auto key = map_key();
     if (key && modifiers) {
-        key->set_modifier(modifiers);
+        key->set_modifiers(modifiers);
     }
 
     return key;
