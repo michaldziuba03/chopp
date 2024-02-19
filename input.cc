@@ -73,15 +73,15 @@ struct Key {
     };
 
     KeyType type = Unknown;
+    Codepoint codepoint = 0;
     int modifiers = 0;
-    int codepoint = 0;
 
     Key() = default;
     constexpr Key(KeyType type) : type(type) {}
     constexpr Key(KeyType type, int modifiers) : type(type), modifiers(modifiers) {}
 
-    constexpr Key(int codepoint) : type(Key::Char), codepoint(codepoint) {}
-    constexpr Key(int codepoint, int modifiers) : type(Key::Char), codepoint(codepoint), modifiers(modifiers) {}
+    constexpr Key(Codepoint codepoint) : type(Key::Char), codepoint(codepoint) {}
+    constexpr Key(Codepoint codepoint, int modifiers) : type(Key::Char), codepoint(codepoint), modifiers(modifiers) {}
 
     auto operator==(Key key) const { return key.type == type; }
     auto operator!=(Key key) const { return key.type != type; }
@@ -173,7 +173,7 @@ class Input {
     std::optional<Mouse> parse_mouse(std::vector<Param>);
     std::optional<char> get_char();
     std::optional<Event> parse_chars(char);
-    std::optional<Key> map_u_key(int codepoint);
+    std::optional<Key> map_u_key(Codepoint codepoint);
     std::optional<Event> parse_ansi();
     std::vector<Param> parse_params(std::optional<char>&);
 public:
@@ -215,11 +215,11 @@ std::vector<Param> Input::parse_params(std::optional<char> &c) {
     return params;
 }
 
-static inline bool is_private_area(int codepoint) {
+static inline bool is_private_area(Codepoint codepoint) {
     return (codepoint >= 57344 && codepoint <= 63743);
 }
 
-std::optional<Key> Input::map_u_key(int codepoint) {
+std::optional<Key> Input::map_u_key(Codepoint codepoint) {
     switch(codepoint) {
         case '\x1b': return Key::Escape;
         case '\r': return Key::Enter;
@@ -419,7 +419,7 @@ std::optional<Event> Input::parse_chars(char c) {
         chars[i] = get_char().value_or(255);
     }
 
-    int codepoint = utf8::to_codepoint(chars);
+    Codepoint codepoint = utf8::to_codepoint(chars);
     if (utf8::is_uppercase(codepoint)) {
         return Key(codepoint, KeyModifiers::SHIFT);
     }

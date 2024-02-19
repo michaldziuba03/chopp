@@ -1,8 +1,10 @@
 #pragma once
 #include <string>
 
+typedef int32_t Codepoint;
+
 namespace utf8 {
-    int codepoint_size(unsigned char byte) {
+    Codepoint codepoint_size(unsigned char byte) {
         if ((byte < 0x80))
             return 1;
         else if ((byte & 0xE0) == 0xC0)
@@ -14,7 +16,7 @@ namespace utf8 {
         return 0;
     }
 
-    int to_codepoint(const char *utf8) {
+    Codepoint to_codepoint(const char *utf8) {
         unsigned char *bytes = (unsigned char *)utf8;
         
         if (bytes[0] < 0x80) {
@@ -30,7 +32,7 @@ namespace utf8 {
         return -1;
     }
 
-    std::string from_codepoint(int codepoint) {
+    std::string from_codepoint(Codepoint codepoint) {
         char utf8[5]{};
 
         if (codepoint < 0x80) {
@@ -52,11 +54,11 @@ namespace utf8 {
         return utf8;
     }
 
-    inline bool is_uppercase(int codepoint) {
+    inline bool is_uppercase(Codepoint codepoint) {
         return std::iswupper(codepoint);
     }
 
-    inline bool is_lowercase(int codepoint) {
+    inline bool is_lowercase(Codepoint codepoint) {
         return std::iswlower(codepoint);
     }
 }
