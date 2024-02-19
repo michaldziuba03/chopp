@@ -169,6 +169,8 @@ struct Event {
 
 class Input {
     std::optional<Mouse> parse_sgr_mouse();
+    std::optional<Mouse> parse_normal_mouse();
+    std::optional<Mouse> parse_mouse(std::vector<Param>);
     std::optional<char> get_char();
     std::optional<Event> parse_chars(char);
     std::optional<Key> map_u_key(int codepoint);
@@ -289,12 +291,8 @@ int get_modifiers(std::vector<Param> params) {
     return 0;
 }
 
-std::optional<Mouse> Input::parse_sgr_mouse() {
-    auto c = get_char();
-    if (!c) return {};
-    auto params = parse_params(c);
+std::optional<Mouse> Input::parse_mouse(std::vector<Param> params) {
     if (params.size() < 3) return {};
-    if (*c != 'M') return {};
 
     int mask = params[0][0];
     int button_num = (mask & 0x3) | ((mask & 0xC0) >> 4);
@@ -314,28 +312,49 @@ std::optional<Mouse> Input::parse_sgr_mouse() {
         modifiers |= KeyModifiers::CTRL;
     }
 
-    auto detect_type = [button_num]() -> Mouse::MouseType {
+    auto detect_type = [button_num]() -> std::optional<Mouse::MouseType> {
         switch (button_num) {
             case 0: return Mouse::Left;
             case 1: return Mouse::Middle;
             case 2: return Mouse::Right;
             case 4: return Mouse::ScrollUp;
             case 5: return Mouse::ScrollDown;
-            default: return Mouse::Unknown;
+            default: return {};
         }
     };
     auto type = detect_type();
+    if (!type) return {};
 
-    return Mouse(type, cx, cy, modifiers);
+    return Mouse(*type, cx, cy, modifiers);
+}
+
+std::optional<Mouse> Input::parse_sgr_mouse() {
+    auto c = get_char();
+    if (!c) return {};
+    auto params = parse_params(c);
+    if (*c != 'M') return {};
+    return parse_mouse(params);
+}
+
+std::optional<Mouse> Input::parse_normal_mouse() {
+    auto c = get_char();
+    if (!c) return {};
+    auto params = parse_params(c);
+    return parse_mouse(params);
 }
 
 std::optional<Event> Input::parse_ansi() {
     auto c = get_char();
     if (!c) return {};
-    if (c == '<') return parse_sgr_mouse();
+    switch (*c) {
+        case '<': return parse_sgr_mouse();
+        case 'M': return parse_normal_mouse();
+    }
 
     auto params = parse_params(c);
     int modifiers = get_modifiers(params);
+
+    if (*c == 'M') return parse_mouse(params);
 
     auto map_key = [&]() -> std::optional<Key>  {
         switch (*c) {
