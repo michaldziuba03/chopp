@@ -174,7 +174,8 @@ class Input {
     std::optional<char> get_char();
     std::optional<Event> parse_chars(char);
     std::optional<Key> map_u_key(Codepoint codepoint);
-    std::optional<Event> parse_ansi();
+    std::optional<Event> parse_csi();
+    std::optional<Event> parse_ss3();
     std::vector<Param> parse_params(std::optional<char>&);
 public:
     std::optional<Event> next_event();
@@ -343,7 +344,26 @@ std::optional<Mouse> Input::parse_normal_mouse() {
     return parse_mouse(params);
 }
 
-std::optional<Event> Input::parse_ansi() {
+std::optional<Event> Input::parse_ss3() {
+    auto c = get_char();
+    if (!c) return {};
+
+    switch (*c) {
+        case 'A': return Key::Up;
+        case 'B': return Key::Down;
+        case 'C': return Key::Right;
+        case 'D': return Key::Left;
+        case 'F': return Key::End;
+        case 'H': return Key::Home;
+        case 'P': return Key::F1;
+        case 'Q': return Key::F2;
+        case 'R': return Key::F3;
+        case 'S': return Key::F4;
+    }
+    return {};
+}
+
+std::optional<Event> Input::parse_csi() {
     auto c = get_char();
     if (!c) return {};
     switch (*c) {
@@ -441,12 +461,12 @@ std::optional<Event> Input::next_event() {
         case 127: return Key::Backspace;
         case ' ': return Key::Space;
         case '\x1b':
-            auto next = get_char().value_or(-1);
+            auto next = get_char().value_or(0);
             switch (next) {
-                case '[': return parse_ansi();
-                case 'O': return parse_ansi();
+                case '[': return parse_csi();
+                case 'O': return parse_ss3();
+                default: return {};
             }
-            return {};
     }
     return parse_chars(*c);
 }
