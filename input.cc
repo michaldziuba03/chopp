@@ -133,9 +133,11 @@ struct Mouse {
     };
 
     MouseType type;
-    int modifiers;
+    int modifiers = 0;
     int cx = 1, cy = 1;
-    constexpr Mouse(MouseType type, int cx, int cy, int modifiers = 0) : type(type), cx(cx), cy(cy), modifiers(modifiers) {}
+
+    Mouse() = default;
+    constexpr Mouse(MouseType type, int cx, int cy, int modifiers) : type(type), cx(cx), cy(cy), modifiers(modifiers) {}
 
     inline bool ctrl() const {
         return (modifiers & KeyModifiers::CTRL) != 0;
