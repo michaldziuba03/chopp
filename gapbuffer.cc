@@ -1,16 +1,12 @@
-#include <list>
 #include <cmath>
 #include <string>
 #include <string.h>
 #include <iostream>
-#include <cassert>
-
-#define GAP_SIZE 16
 
 struct GapBuffer {
     char *buffer = nullptr;
     size_t buffer_size = 0;
-    size_t gap_size = GAP_SIZE;
+    size_t gap_size = 16;
     char *gap_start = nullptr;
 
     inline char *gap_end() {
@@ -29,7 +25,7 @@ struct GapBuffer {
         return length() == 0;
     }
 
-    GapBuffer(size_t );
+    GapBuffer(size_t);
     ~GapBuffer();
     void move_gap(int);
     void insert(const std::string&);
@@ -37,6 +33,8 @@ struct GapBuffer {
     void erase();
     void print_debug();
     std::string to_str();
+private:
+    void resize(size_t);
 };
 
 GapBuffer::GapBuffer(size_t nbytes) {
@@ -67,6 +65,37 @@ void GapBuffer::move_gap(int amount) {
     }
 }
 
+void GapBuffer::resize(size_t size) {
+    size_t new_buff_size = 2 * std::max(size, buffer_size);
+    char *new_buff = new char[new_buff_size];
+
+    size_t left_size = gap_start - buffer;
+    memcpy(new_buff, buffer, left_size);
+
+    size_t right_size = buffer_end() - gap_end();
+    memcpy(new_buff + (new_buff_size - right_size), gap_end(), right_size);
+    
+    gap_start = new_buff + left_size;
+    gap_size = new_buff_size - (left_size + right_size);
+    buffer_size = new_buff_size;
+    delete[] buffer;
+    buffer = new_buff;
+}
+
+void GapBuffer::insert(const std::string &str) {
+    if (str.empty()) {
+        return;
+    }
+
+    size_t str_size = str.size();
+    if (str_size >= gap_size) {
+        resize(str_size);
+    }
+    memcpy(gap_start, str.c_str(), str_size);
+    gap_start += str_size;
+    gap_size -= str_size;
+}
+
 void GapBuffer::remove(const size_t amount) {
     if (gap_start - amount >= buffer) {
         gap_start -= amount;
@@ -79,18 +108,6 @@ void GapBuffer::erase() {
     gap_size = buffer_size;
 }
 
-void GapBuffer::insert(const std::string &str) {
-    if (str.empty()) {
-        return;
-    }
-
-    size_t str_size = str.size();
-    // TODO: extend gap and buffer when str_size >= gap_size
-    assert(str_size < gap_size);
-    memcpy(gap_start, str.c_str(), str_size);
-    gap_start += str_size;
-    gap_size -= str_size;
-}
 
 std::string GapBuffer::to_str() {
     std::string str;
@@ -107,7 +124,7 @@ void GapBuffer::print_debug() {
     for (int i = 0; i < gap_size; ++i) {
         std::cout << "_";
     }
-    for (auto it = gap_start + gap_size; it < buffer + buffer_size; ++it) {
+    for (auto it = gap_end(); it < buffer_end(); ++it) {
         std::cout << *it;
     }
     std::cout << std::endl;
@@ -127,6 +144,10 @@ int main() {
     buff.print_debug();
     buff.remove(2);
     buff.insert("l");
+    buff.print_debug();
+    buff.insert("(ABCDEFGH)");
+    buff.move_gap(-2);
+    buff.insert("abc");
     buff.print_debug();
     std::cout << "String: " << buff.to_str() << "\nLength:" << buff.length() << std::endl;
     buff.erase();
