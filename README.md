@@ -2,19 +2,17 @@
 
 # Chopp
 
-Simple TUI text editor written in C++. Experimental project with messy code - I'm working on improved "final" version.
-
 ![image](https://github.com/michaldziuba03/chopp/assets/43048524/150d891f-67d0-4970-b55a-27d508c38876)
 
-> Current state of the project
+> State before rewriting. Work in progress
 
 ## Rules and goals of the project
 
-- don't use TUI libraries like ncurses, curses etc. I want to learn how more complex TUI is handled by terminals. Project follows widely supported [vt100](https://www.vt100.net/) standard
-- support searching in text
-- support syntax highlighting
-- support UTF-8
-- make it usable for daily use
+- [x] Advanced input handling (support [Kitty keyboard enhancement](https://sw.kovidgoyal.net/kitty/keyboard-protocol/#progressive-enhancement)).
+- [x] UTF-8 support.
+- [ ] Advanced data structure for text buffer (work in progress).
+- [ ] Syntax highlighting.
+- [ ] Search in text.
 
 ## License
 

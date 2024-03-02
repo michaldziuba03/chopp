@@ -1,144 +1,64 @@
 #pragma once
-#include "utf8.hh"
-#include <iostream>
-#include <exception>
+#include <string>
 
-int codepointSize(char byte) {
-    if ((byte & 0x80) == 0) // 0xxxxxxx
-        return 1;
-    else if ((byte & 0xE0) == 0xC0) // 110xxxxx
-        return 2;
-    else if ((byte & 0xF0) == 0xE0) // 1110xxxx
-        return 3;
-    else if ((byte & 0xF8) == 0xF0) // 11110xxx
-        return 4;
+typedef int32_t Codepoint;
 
-    // idk what to do if codepoint size is unknown
-    return -1;
-}
-
-size_t columnLen(const std::string& str) {
-    size_t len = 0;
-    size_t i = 0;
-
-    while(i < str.length()) {
-        char c = str[i];
-        if (c == '\r') {
-            i++;
-            continue;
-        }
-
-        i += codepointSize(c);
-        len++;
+namespace utf8 {
+    Codepoint codepoint_size(unsigned char byte) {
+        if ((byte < 0x80))
+            return 1;
+        else if ((byte & 0xE0) == 0xC0)
+            return 2;
+        else if ((byte & 0xF0) == 0xE0)
+            return 3;
+        else if ((byte & 0xF8) == 0xF0)
+            return 4;
+        return 0;
     }
 
-    return len;
-}
-
-void removeChar(std::string& str, int pos)
-{
-    size_t i = 0; // index relative to string bytes
-    size_t j = 0; // index relative to "printable" unicode length
-
-    while(i <= str.length()) {
-        size_t cSize = codepointSize(str[i]);
-        if (cSize == -1) {
-            throw std::runtime_error("Invalid UTF-8 character");
+    Codepoint to_codepoint(const char *utf8) {
+        unsigned char *bytes = (unsigned char *)utf8;
+        
+        if (bytes[0] < 0x80) {
+            return bytes[0];
+        } else if ((bytes[0] & 0xE0) == 0xC0) {
+            return ((bytes[0] & 0x1F) << 6) | (bytes[1] & 0x3F);
+        } else if ((bytes[0] & 0xF0) == 0xE0) {
+            return ((bytes[0] & 0x0F) << 12) | ((bytes[1] & 0x3F) << 6) | (bytes[2] & 0x3F);
+        } else if ((bytes[0] & 0xF8) == 0xF0) {
+            return ((bytes[0] & 0x07) << 18) | ((bytes[1] & 0x3F) << 12) | ((bytes[2] & 0x3F) << 6) | (bytes[3] & 0x3F);
         }
 
-        if (j == pos) {
-            str.erase(i, cSize);
-            break;
-        }
-
-        i += cSize;
-        j++;
-    }
-}
-
-std::string substr(const std::string& str, int pos, int n) {
-    size_t i = 0; // index relative to string bytes
-    size_t j = 0; // index relative to "printable" unicode length
-
-    bool isSet = false;
-    int start = 0;
-    int end = 0;
-
-    while(i <= str.length()) {
-        size_t cSize = codepointSize(str[i]);
-        if (cSize == -1) {
-            throw std::runtime_error("Invalid UTF-8 character");
-        }
-
-        if (j == pos) {
-            isSet = true;
-            start = i;
-        }
-
-        if (j == start + n && isSet) {
-            end = i;
-            break;
-        }
-
-
-        i += cSize;
-        j++;
+        return -1;
     }
 
-    size_t amount = end - start;
-    return str.substr(start, amount);
-}
+    std::string from_codepoint(Codepoint codepoint) {
+        char utf8[5]{};
 
-void erase(std::string& str, int pos, int n) {
-    size_t i = 0; // index relative to string bytes
-    size_t j = 0; // index relative to "printable" unicode length
-
-    bool isSet = false;
-    int start = 0;
-    int end = 0;
-
-    while(i <= str.length()) {
-        size_t cSize = codepointSize(str[i]);
-        if (cSize == -1) {
-            throw std::runtime_error("Invalid UTF-8 character");
+        if (codepoint < 0x80) {
+            utf8[0] = codepoint;
+        } else if (codepoint < 0x800) {
+            utf8[0] = 0xC0 | (codepoint >> 6);
+            utf8[1] = 0x80 | (codepoint & 0x3F);
+        } else if (codepoint < 0x10000) {
+            utf8[0] = 0xE0 | (codepoint >> 12);
+            utf8[1] = 0x80 | ((codepoint >> 6) & 0x3F);
+            utf8[2] = 0x80 | (codepoint & 0x3F);
+        } else if (codepoint < 0x110000) {
+            utf8[0] = 0xF0 | (codepoint >> 18);
+            utf8[1] = 0x80 | ((codepoint >> 12) & 0x3F);
+            utf8[2] = 0x80 | ((codepoint >> 6) & 0x3F);
+            utf8[3] = 0x80 | (codepoint & 0x3F);
         }
 
-        if (j == pos) {
-            isSet = true;
-            start = i;
-        }
-
-        if (j == start + n && isSet) {
-            end = i;
-            break;
-        }
-
-
-        i += cSize;
-        j++;
+        return utf8;
     }
 
-    size_t amount = end - start;
-    str.erase(start, amount);
-}
+    inline bool is_uppercase(Codepoint codepoint) {
+        return std::iswupper(codepoint);
+    }
 
-// temporary shitty implementation
-void appendChar(std::string& str, int pos, const char* chars) {
-    size_t i = 0; // index relative to string bytes
-    size_t j = 0; // index relative to "printable" unicode length
-
-    while(i <= str.length()) {
-        size_t cSize = codepointSize(str[i]);
-        if (cSize == -1) {
-            throw std::runtime_error("Invalid UTF-8 character");
-        }
-
-        if (j == pos) {
-            str.insert(i, chars, codepointSize(chars[0]));
-            break;
-        }
-
-        i += cSize;
-        j++;
+    inline bool is_lowercase(Codepoint codepoint) {
+        return std::iswlower(codepoint);
     }
 }
