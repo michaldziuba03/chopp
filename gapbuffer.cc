@@ -135,7 +135,7 @@ size_t GapBuffer::remove(const size_t amount) {
         gap_start -= amount;
 
         return amount;
-    }    
+    }
     size_t removed = (gap_start - buffer);
     gap_size += removed;
     gap_start = buffer;
@@ -177,37 +177,4 @@ void GapBuffer::print_debug() {
         std::cout << *it;
     }
     std::cout << std::endl;
-}
-
-int main() {
-    GapBuffer buff(8);
-    buff.insert("Hell");
-    buff.print_debug();
-    buff.insert("Oh");
-    buff.print_debug();
-    buff.move_gap(-3);
-    buff.print_debug();
-    buff.insert("P");
-    buff.print_debug();
-    buff.move_gap(1);
-    buff.print_debug();
-    buff.remove(2);
-    buff.insert("l");
-    buff.print_debug();
-    buff.insert("(ABCDEFGH)");
-    buff.move_gap(-2);
-    buff.insert("abc");
-    buff.print_debug();
-    std::cout << "String: " << buff.to_str() << "\nLength:" << buff.length() << std::endl;
-    buff.remove(210);
-    buff.insert("TEST");
-    buff.move_gap_to(1);
-
-    for (int i = 0; i < buff.length(); ++i) {
-        std::cout << ">" << buff[i] << std::endl;
-    }
-
-    buff.print_debug();
-    buff.erase();
-    buff.print_debug();
 }

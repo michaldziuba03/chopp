@@ -1,6 +1,7 @@
 #include <locale>
 #include <iostream>
 #include "terminal.cc"
+#include "textbuffer.cc"
 #include "input.cc"
 #include "utf8.cc"
 
