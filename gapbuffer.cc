@@ -20,8 +20,12 @@ private:
         return buffer + buffer_size;
     }
 public:
+    GapBuffer(const std::string &str) : GapBuffer(str.capacity()) {
+        insert(str);
+    }
     GapBuffer(size_t);
     ~GapBuffer();
+    std::string split();
     void move_gap(int); // move amount
     void move_gap_to(size_t); // move to specific index
     void insert(const std::string&);
@@ -146,6 +150,14 @@ size_t GapBuffer::remove(const size_t amount) {
 void GapBuffer::erase() {
     gap_start = buffer;
     gap_size = buffer_size;
+}
+
+std::string GapBuffer::split() {
+    std::string str;
+    str.append(gap_end(), buffer_end());
+    gap_size += buffer_end() - gap_end();
+
+    return str;
 }
 
 std::string GapBuffer::to_str() {
